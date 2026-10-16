@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -130,12 +130,12 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     </div>
 
     <div class="feature" id="play-card">
-      <h3>01 — Play</h3>
+      <h3>01 вЂ” Play</h3>
       <p>Make legal moves on the board. Try different plans and learn how the position changes.</p>
     </div>
 
     <div class="feature hidden" id="solve-card">
-      <h3 id="puzzle-title">02 — Solve</h3>
+      <h3 id="puzzle-title">02 вЂ” Solve</h3>
       <p id="objective"></p>
     </div>
 
@@ -146,7 +146,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       <div class="levels" id="levels">
         <button data-level="all" class="on">All levels</button>
         <button data-level="beginner">Beginner<small>under 1200</small></button>
-        <button data-level="intermediate">Average<small>1200–1800</small></button>
+        <button data-level="intermediate">Average<small>1200вЂ“1800</small></button>
         <button data-level="expert">Expert<small>1800+</small></button>
       </div>
       <label for="category-select">Puzzle category</label>
@@ -161,10 +161,10 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     </div>
 
     <div class="feature">
-      <h3>03 — Improve</h3>
+      <h3>03 вЂ” Improve</h3>
       <div class="stats">
         <div class="stat"><b id="st-solved">0</b><span>Solved</span></div>
-        <div class="stat"><b id="st-acc">–</b><span>Clean solves</span></div>
+        <div class="stat"><b id="st-acc">вЂ“</b><span>Clean solves</span></div>
         <div class="stat"><b id="st-streak">0</b><span>Streak</span></div>
         <div class="stat"><b id="st-best">0</b><span>Best streak</span></div>
       </div>
@@ -177,62 +177,62 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       <div class="academy-list" id="academy-list">
         <details class="lesson" open>
           <summary>1. King + queen vs king</summary>
-          <p class="lesson-level">Beginner · Basic checkmate</p>
+          <p class="lesson-level">Beginner В· Basic checkmate</p>
           <p>Use your queen to shrink the enemy king's box, then bring your own king closer. Avoid stalemate: if the enemy king has no legal move but is not in check, the game is a draw.</p>
         </details>
         <details class="lesson">
           <summary>2. King + rook vs king</summary>
-          <p class="lesson-level">Beginner · Basic checkmate</p>
+          <p class="lesson-level">Beginner В· Basic checkmate</p>
           <p>Cut the king off with your rook, use your king to take away escape squares, and push the enemy king to an edge. Keep the rook protected and avoid allowing a stalemate.</p>
         </details>
         <details class="lesson">
           <summary>3. Two bishops vs king</summary>
-          <p class="lesson-level">Intermediate · The bishop pair</p>
+          <p class="lesson-level">Intermediate В· The bishop pair</p>
           <p>The bishops control diagonals of both colours. Work with your king to drive the enemy king toward a corner, then use the bishops to cover the escape squares while delivering mate.</p>
         </details>
         <details class="lesson">
           <summary>4. Bishop + knight vs king</summary>
-          <p class="lesson-level">Advanced · The difficult basic mate</p>
+          <p class="lesson-level">Advanced В· The difficult basic mate</p>
           <p>This is a forced checkmate but requires precision. The bishop controls one colour complex; the knight helps cover the other colour's escape squares. Drive the king to a corner that matches your bishop's colour, using a repeatable W-shaped knight manoeuvre.</p>
         </details>
         <details class="lesson">
           <summary>5. King + pawn vs king: opposition</summary>
-          <p class="lesson-level">Beginner · Pawn endings</p>
+          <p class="lesson-level">Beginner В· Pawn endings</p>
           <p>Opposition means the kings face each other with one square between them. The side not to move often has the opposition. Use it to escort your pawn forward, but check whether the king can reach the promotion square in time.</p>
         </details>
         <details class="lesson">
           <summary>6. The rule of the square</summary>
-          <p class="lesson-level">Beginner · Pawn race</p>
+          <p class="lesson-level">Beginner В· Pawn race</p>
           <p>Imagine a square from the pawn to its promotion square. If the defending king can enter that square when it is the king's turn to move, it can usually catch the pawn; otherwise the pawn promotes. Account for the pawn's two-square first move.</p>
         </details>
         <details class="lesson">
           <summary>7. Rook endgames: activate the rook</summary>
-          <p class="lesson-level">Intermediate · Rook endings</p>
+          <p class="lesson-level">Intermediate В· Rook endings</p>
           <p>Active rooks usually matter more than passive pawn-grabbing. Put the rook behind passed pawns, cut off the enemy king when possible, and activate your king. Rook endgames often require checking from behind rather than blocking the pawn directly.</p>
         </details>
         <details class="lesson">
           <summary>8. Philidor defence</summary>
-          <p class="lesson-level">Advanced · Rook + pawn vs rook</p>
+          <p class="lesson-level">Advanced В· Rook + pawn vs rook</p>
           <p>In the classic rook-and-pawn-versus-rook setup, the defender can often draw by keeping the king in front of the pawn and the rook on the third rank until the pawn advances, then checking from behind or the side. Exact positions matter.</p>
         </details>
         <details class="lesson">
           <summary>9. Lucena position</summary>
-          <p class="lesson-level">Advanced · Rook + pawn vs rook</p>
+          <p class="lesson-level">Advanced В· Rook + pawn vs rook</p>
           <p>A classic winning setup for the stronger side with a rook pawn or central pawn on the seventh rank and the king supporting it. The usual idea is to build a bridge with the rook to shield the king from checks while the pawn promotes.</p>
         </details>
         <details class="lesson">
           <summary>10. Rook vs rook: draw-saving technique</summary>
-          <p class="lesson-level">Advanced · Defensive technique</p>
+          <p class="lesson-level">Advanced В· Defensive technique</p>
           <p>Many rook endings are drawable with accurate defence. Look for checking distance, side checks, a king in front of the pawn, and whether the stronger side can escape perpetual checks. This is not one universal position: the pawn's file and rank change the result.</p>
         </details>
         <details class="lesson">
           <summary>11. Bishop vs knight</summary>
-          <p class="lesson-level">Intermediate · Minor-piece endings</p>
+          <p class="lesson-level">Intermediate В· Minor-piece endings</p>
           <p>Bishops are strongest when play exists on both wings and pawns are on both colours. Knights can be strong with blocked pawns and fixed targets. Evaluate pawn structure, king activity, and whether the bishop is trapped behind its own pawns.</p>
         </details>
         <details class="lesson">
           <summary>12. Queen vs king: avoid stalemate</summary>
-          <p class="lesson-level">Beginner · Conversion technique</p>
+          <p class="lesson-level">Beginner В· Conversion technique</p>
           <p>Keep the opposing king boxed in without taking away every move unless the king is in check. Bring your king close before the final net, and always verify the position is checkmate rather than stalemate.</p>
         </details>
       </div>
@@ -259,7 +259,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   </aside>
 </main>
 
-<footer>ENDGAME LAB · An independent chess training project</footer>
+<footer>ENDGAME LAB В· An independent chess training project</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -337,7 +337,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   function renderMateStats() {
     const s = currentMode === "endgame" ? egStats : mateStats;
     $("st-solved").textContent = s.solved;
-    $("st-acc").textContent = s.solved ? Math.round(100 * s.clean / s.solved) + "%" : "–";
+    $("st-acc").textContent = s.solved ? Math.round(100 * s.clean / s.solved) + "%" : "вЂ“";
     $("st-streak").textContent = s.streak;
     $("st-best").textContent = s.best;
   }
@@ -349,10 +349,10 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   $("endgame-card").appendChild(egStatsBox);
   function renderEndgameStats() {
     const unique = Object.keys(egStats.solvedIds).length;
-    const acc = egStats.solved ? Math.round(100 * egStats.clean / egStats.solved) + "%" : "–";
+    const acc = egStats.solved ? Math.round(100 * egStats.clean / egStats.solved) + "%" : "вЂ“";
     egStatsBox.innerHTML = "<b>Endgame puzzle stats</b><br>Attempted: " + egStats.attempts +
-      " · Solved: " + egStats.solved + " (" + unique + " different)<br>Clean solves: " + acc +
-      " · Streak: " + egStats.streak + " (best " + egStats.best + ")";
+      " В· Solved: " + egStats.solved + " (" + unique + " different)<br>Clean solves: " + acc +
+      " В· Streak: " + egStats.streak + " (best " + egStats.best + ")";
   }
   function saveEndgameStats() { writeStore(ENDGAME_KEY, egStats); renderEndgameStats(); renderActiveStats(); }
 
@@ -461,7 +461,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     movesLeft = p.n; mistakes = 0; hints = 0; finished = false;
     syncBoard();
     board.orientation(game.turn() === "w" ? "white" : "black");
-    $("puzzle-title").textContent = "02 — " + p.title;
+    $("puzzle-title").textContent = "02 вЂ” " + p.title;
     $("objective").textContent = sideName(game.turn()) + " to move. Deliver checkmate in " + p.n + (p.n === 1 ? " move." : " moves.");
     $("turn-label").textContent = "Puzzle " + (orderPos + 1) + " of " + PUZZLES.length;
     $("next-button").classList.add("hidden");
@@ -500,7 +500,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     if (clean) { mateStats.clean++; mateStats.streak++; mateStats.best = Math.max(mateStats.best, mateStats.streak); }
     else mateStats.streak = 0;
     saveMateStats();
-    setStatus("<strong>Checkmate — solved!</strong><br>" +
+    setStatus("<strong>Checkmate вЂ” solved!</strong><br>" +
       (clean ? "Clean solve, no mistakes or hints."
              : mistakes + " mistake" + (mistakes === 1 ? "" : "s") + ", " + hints + " hint" + (hints === 1 ? "" : "s") + ".") +
       "<br>Next puzzle loading...");
@@ -530,19 +530,63 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       p.moves.every(function (m) { return typeof m === "string" && UCI_PATTERN.test(m); });
   }
 
-  async function loadEndgameData(category) {
-    if (endgameCache[category]) return endgameCache[category];
+  async function loadEndgameData(category, level) {
     if (location.protocol === "file:") {
-      throw new Error("The page was opened as a file. Run a local server in this folder (python -m http.server 8000) and open http://localhost:8000/index_dev.html");
+      throw new Error("The page was opened as a file. Run a local server in this folder (python -m http.server 8000) and open http://localhost:8000/index_dev_v1.html");
     }
-    const response = await fetch("puzzles/" + category + "_endgames.json");
-    if (!response.ok) throw new Error("Could not load puzzles/" + category + "_endgames.json (HTTP " + response.status + ").");
-    const data = await response.json();
-    if (!Array.isArray(data) || !data.length) throw new Error("The " + category + " dataset is empty or not a list.");
-    endgameCache[category] = data;
-    return data;
-  }
 
+    const manifestKey = "manifest:" + category;
+    let manifest = endgameCache[manifestKey];
+
+    if (!manifest) {
+      const response = await fetch("puzzles_chunked/" + category + "/manifest.json");
+      if (!response.ok) {
+        throw new Error("Could not load the " + category + " puzzle manifest (HTTP " + response.status + ").");
+      }
+      manifest = await response.json();
+      if (!manifest || !Array.isArray(manifest.chunks) || !manifest.chunks.length) {
+        throw new Error("The " + category + " puzzle manifest is invalid or empty.");
+      }
+      endgameCache[manifestKey] = manifest;
+    }
+
+    const eligible = manifest.chunks.filter(function (chunk) {
+      if (level === "all") return chunk.count > 0;
+      return chunk.levels && Number(chunk.levels[level]) > 0;
+    });
+
+    if (!eligible.length) {
+      throw new Error("No " + LEVELS[level].name.toLowerCase() + " puzzles in the " + category + " set.");
+    }
+
+    // Select one eligible chunk; do not download the whole category.
+    const selected = eligible[Math.floor(Math.random() * eligible.length)];
+    const cacheKey = category + ":" + selected.file;
+    let data = endgameCache[cacheKey];
+
+    if (!data) {
+      const url = "puzzles_chunked/" + category + "/" + selected.file;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Could not load " + url + " (HTTP " + response.status + ").");
+      }
+      data = await response.json();
+      if (!Array.isArray(data) || !data.length) {
+        throw new Error("Puzzle chunk " + selected.file + " is invalid or empty.");
+      }
+      endgameCache[cacheKey] = data;
+    }
+
+    const pool = data.filter(function (p) {
+      return LEVELS[level].test(Number(p.rating));
+    });
+
+    if (!pool.length) {
+      throw new Error("The selected chunk contained no matching puzzles. Please try Next puzzle.");
+    }
+
+    return pool;
+  }
   function setupEndgamePosition(p) {
     if (!isValidPuzzle(p)) return false;
     if (!game.load(p.fen)) return false;
@@ -553,7 +597,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     const p = currentEndgame, side = sideName(game.turn());
     syncBoard();
     board.orientation(game.turn() === "w" ? "white" : "black");
-    $("endgame-title").textContent = (CATEGORY_NAMES[currentCategory] || currentCategory) + " endgame — Rating " + p.rating;
+    $("endgame-title").textContent = (CATEGORY_NAMES[currentCategory] || currentCategory) + " endgame вЂ” Rating " + p.rating;
     const themes = (p.themes || []).filter(function (t) { return t !== "endgame" && !/Endgame$/.test(t); });
     const nice = themes.slice(0, 4).map(function (t) { return THEME_NAMES[t] || t.replace(/([A-Z])/g, " $1").toLowerCase(); });
     const all = p.themes || [];
@@ -581,9 +625,8 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       if (currentEndgame && !endgameFinished) { egStats.streak = 0; saveEndgameStats(); }
       $("endgame-objective").textContent = "Loading puzzle...";
       endgameFinished = true;
-      const data = await loadEndgameData(category);
+      const pool = await loadEndgameData(category, currentLevel);
       if (mySession !== session) return;
-      const pool = data.filter(function (p) { return LEVELS[currentLevel].test(Number(p.rating)); });
       if (!pool.length) throw new Error("No " + LEVELS[currentLevel].name.toLowerCase() + " puzzles in the " + category + " set. Try another level.");
       currentCategory = category;
 
@@ -691,7 +734,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   function closePromotion() { if (promoOverlay) { promoOverlay.remove(); promoOverlay = null; } }
   function askPromotion(color, onChoose, onCancel) {
     closePromotion();
-    const glyphs = color === "w" ? { q: "♕", r: "♖", b: "♗", n: "♘" } : { q: "♛", r: "♜", b: "♝", n: "♞" };
+    const glyphs = color === "w" ? { q: "в™•", r: "в™–", b: "в™—", n: "в™" } : { q: "в™›", r: "в™њ", b: "в™ќ", n: "в™ћ" };
     const labels = { q: "Queen", r: "Rook", b: "Bishop", n: "Knight" };
     promoOverlay = document.createElement("div");
     promoOverlay.className = "promo-overlay";
