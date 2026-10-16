@@ -11,6 +11,14 @@
     body { margin:0; min-height:100vh; background:var(--background); color:var(--text); font-family:Arial,sans-serif; }
     header { padding:22px 7%; border-bottom:1px solid var(--border); }
     .brand { color:var(--accent); font-size:13px; font-weight:bold; letter-spacing:3px; }
+    .creator {
+  margin: 10px 0 0;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  opacity: 0.9;
+}
     h1 { margin:8px 0 4px; font-size:clamp(28px,5vw,42px); }
     header p { margin:0; color:var(--muted); }
     main { display:grid; grid-template-columns:minmax(0,560px) minmax(240px,320px); gap:28px; justify-content:center; align-items:start; max-width:1100px; margin:36px auto; padding:0 20px; }
@@ -30,7 +38,8 @@
     button:hover { border-color:var(--accent); }
     button.on { border-color:var(--accent); color:var(--accent); }
     .primary { grid-column:1 / -1; background:var(--accent); color:#182012; border-color:var(--accent); }
-    .modes { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0; }
+    .modes { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:16px 0; }
+    .modes button { padding:10px 6px; font-size:13px; }
     .hidden { display:none !important; }
     .stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
     .stat { background:#111812; border-radius:8px; padding:8px; text-align:center; }
@@ -49,6 +58,7 @@
     <div class="brand">ENDGAME LAB</div>
     <h1>Calculate. Convert. Survive.</h1>
     <p>A chess training laboratory for the endgame.</p>
+    <p class="creator">@jmsbldy</p>
   </header>
 
   <main>
@@ -71,9 +81,11 @@
     <aside class="side-panel">
       <div class="eyebrow">TRAINING ROOM 01</div>
       <h2>Your endgame journey</h2>
+
       <div class="modes">
         <button id="mode-play" class="on">Free play</button>
-        <button id="mode-train">Train</button>
+        <button id="mode-train">Mate trainer</button>
+        <button id="mode-endgame">Endgame puzzles</button>
       </div>
 
       <div class="feature" id="play-card">
@@ -84,6 +96,19 @@
       <div class="feature hidden" id="solve-card">
         <h3 id="puzzle-title">02 — Solve</h3>
         <p id="objective"></p>
+      </div>
+
+      <div class="feature hidden" id="endgame-card">
+        <h3 id="endgame-title">Endgame puzzle</h3>
+        <p id="endgame-objective">Choose a category and load a puzzle.</p>
+        <label for="category-select">Puzzle category</label>
+        <select id="category-select">
+          <option value="rook">Rook endgames</option>
+          <option value="pawn">Pawn endgames</option>
+          <option value="bishop">Bishop endgames</option>
+          <option value="queen">Queen endgames</option>
+        </select>
+        <button id="load-endgame">Load endgame puzzle</button>
       </div>
 
       <div class="feature">
@@ -106,241 +131,706 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 
   <script>
-    const game = new Chess();
+(function () {
+  "use strict";
 
-    // ---------- Puzzles: White to move, mate in N ----------
-    const PUZZLES = [
-      { title: "Queen and king",        fen: "7k/5K2/8/8/8/8/8/6Q1 w - - 0 1",    n: 1 },
-      { title: "Back rank",             fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", n: 1 },
-      { title: "Rook and king",         fen: "k7/8/1K6/8/8/8/8/7R w - - 0 1",     n: 1 },
-      { title: "Rook on the 8th",       fen: "5k2/R7/5K2/8/8/8/8/8 w - - 0 1",    n: 1 },
-      { title: "Take away the squares", fen: "k7/8/2K5/8/8/8/8/Q7 w - - 0 1",     n: 2 },
-      { title: "Box in the king",       fen: "7k/8/5K2/8/8/8/8/Q7 w - - 0 1",     n: 2 }
-    ];
+  // ============================================================
+  // 0. SAFETY CHECKS
+  // ============================================================
+  if (typeof Chess === "undefined" || typeof Chessboard === "undefined") {
+    alert("Endgame Lab: chess.js or chessboard.js did not load. Check your internet connection and the <script src=...> lines.");
+    return;
+  }
+  if (!document.getElementById("board")) {
+    alert('Endgame Lab: the HTML has no element with id="board".');
+    return;
+  }
 
-    // ---------- Tiny mate solver (checks solutions, finds hints) ----------
-    // Attacker to move: can they force mate within n moves?
-    function canMate(n) {
-      if (n < 1) return false;
-      for (const m of game.moves()) {
-        game.move(m);
-        const ok = game.in_checkmate() || (n > 1 && defenderLoses(n - 1));
-        game.undo();
-        if (ok) return true;
-      }
-      return false;
-    }
-    // Defender to move: does every reply allow mate within n more attacker moves?
-    function defenderLoses(n) {
-      if (game.in_checkmate()) return true;
-      if (game.game_over() || n < 1) return false;
-      for (const r of game.moves()) {
-        game.move(r);
-        const ok = canMate(n);
-        game.undo();
-        if (!ok) return false;
-      }
-      return true;
-    }
-    function bestMove(n) {
-      for (const m of game.moves({ verbose: true })) {
-        game.move(m);
-        const ok = game.in_checkmate() || (n > 1 && defenderLoses(n - 1));
-        game.undo();
-        if (ok) return m;
-      }
-      return null;
-    }
-    // Defender picks the reply that survives longest.
-    function stubbornReply(maxN) {
-      let best = null, bestK = -1;
-      for (const r of game.moves()) {
-        game.move(r);
-        let k = 1;
-        while (k <= maxN && !canMate(k)) k++;
-        game.undo();
-        if (k > bestK) { bestK = k; best = r; }
-      }
-      return best;
-    }
+  const missingIds = [];
+  function $(id) {
+    const found = document.getElementById(id);
+    if (found) return found;
+    if (missingIds.indexOf(id) === -1) missingIds.push(id);
+    return document.createElement("div"); // harmless stand-in so the script never crashes
+  }
 
-    // ---------- State ----------
-    let mode = "play";
-    let order = [], orderPos = -1;
-    let movesLeft = 0, mistakes = 0, hints = 0, locked = false, finished = false;
-    const KEY = "endgame-lab-stats";
-    let stats = { solved: 0, clean: 0, streak: 0, best: 0 };
-    try { stats = Object.assign(stats, JSON.parse(localStorage.getItem(KEY))); } catch (e) {}
-    function saveStats() {
-      try { localStorage.setItem(KEY, JSON.stringify(stats)); } catch (e) {}
-      renderStats();
-    }
-    function renderStats() {
-      document.getElementById("st-solved").textContent = stats.solved;
-      document.getElementById("st-acc").textContent =
-        stats.solved ? Math.round(100 * stats.clean / stats.solved) + "%" : "–";
-      document.getElementById("st-streak").textContent = stats.streak;
-      document.getElementById("st-best").textContent = stats.best;
-    }
+  // Styles for things this script creates itself (promotion picker, endgame stats, select box).
+  const styleTag = document.createElement("style");
+  styleTag.textContent =
+    ".promo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:1000}" +
+    ".promo-box{background:var(--panel,#1c231e);border:1px solid var(--border,#303b32);border-radius:14px;padding:18px;text-align:center;color:var(--text,#edf4ed);max-width:92vw}" +
+    ".promo-box p{margin:0 0 12px;font-weight:bold}" +
+    ".promo-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}" +
+    ".promo-row button{font-size:34px;line-height:1;padding:10px 14px}" +
+    ".promo-cancel{margin-top:12px;font-size:13px!important;padding:8px 12px!important}" +
+    "#endgame-card label{display:block;margin:14px 0 6px;font-size:13px;color:var(--muted,#9ba99d)}" +
+    "#endgame-card select{width:100%;padding:10px;border-radius:9px;border:1px solid var(--border,#303b32);background:#111812;color:var(--text,#edf4ed);font-size:14px}" +
+    "#load-endgame{width:100%;margin-top:12px}" +
+    ".eg-stats{margin-top:14px;padding-top:12px;border-top:1px solid var(--border,#303b32);font-size:12px;line-height:1.6;color:var(--muted,#9ba99d)}" +
+    ".eg-stats b{color:var(--accent,#b9e769)}";
+  document.head.appendChild(styleTag);
 
-    const $ = (id) => document.getElementById(id);
-    function setStatus(html, bad) {
-      $("status").innerHTML = html;
-      $("status").classList.toggle("bad", !!bad);
-    }
+  // ============================================================
+  // 1. CONSTANTS AND DATA
+  // ============================================================
+  const PIECE_URL = "https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png";
+  const CATEGORY_NAMES = { rook: "Rook", pawn: "Pawn", bishop: "Bishop", queen: "Queen" };
+  const UCI_PATTERN = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
+  const THEME_NAMES = {
+    advantage: "Advantage", crushing: "Crushing", equality: "Equality", short: "Short", long: "Long",
+    veryLong: "Very long", oneMove: "One move", mate: "Mate", promotion: "Promotion",
+    advancedPawn: "Advanced pawn", zugzwang: "Zugzwang", fork: "Fork", pin: "Pin", skewer: "Skewer",
+    defensiveMove: "Defensive move", quietMove: "Quiet move", sacrifice: "Sacrifice",
+    discoveredAttack: "Discovered attack", hangingPiece: "Hanging piece", trappedPiece: "Trapped piece",
+    exposedKing: "Exposed king", attraction: "Attraction", deflection: "Deflection",
+    capturingDefender: "Capturing defender", clearance: "Clearance", intermezzo: "Intermezzo",
+    underPromotion: "Underpromotion", backRankMate: "Back-rank mate"
+  };
 
-    // ---------- Board ----------
-    const board = Chessboard("board", {
-      position: "start",
-      draggable: true,
-      pieceTheme: "https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png",
+  // Mate-trainer puzzles (White to move, mate in N). Unchanged from before.
+  const PUZZLES = [
+    { title: "Queen and king",        fen: "7k/5K2/8/8/8/8/8/6Q1 w - - 0 1",    n: 1 },
+    { title: "Back rank",             fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", n: 1 },
+    { title: "Rook and king",         fen: "k7/8/1K6/8/8/8/8/7R w - - 0 1",     n: 1 },
+    { title: "Rook on the 8th",       fen: "5k2/R7/5K2/8/8/8/8/8 w - - 0 1",    n: 1 },
+    { title: "Take away the squares", fen: "k7/8/2K5/8/8/8/8/Q7 w - - 0 1",     n: 2 },
+    { title: "Box in the king",       fen: "7k/8/5K2/8/8/8/8/Q7 w - - 0 1",     n: 2 }
+  ];
 
-      onDragStart: function (source, piece) {
-        if (game.game_over() || locked || finished) return false;
-        if ((game.turn() === "w" && piece.startsWith("b")) ||
-            (game.turn() === "b" && piece.startsWith("w"))) return false;
-      },
+  // ============================================================
+  // 2. STATE
+  // ============================================================
+  const game = new Chess();
+  let currentMode = "play";   // "play" | "train" | "endgame"
+  let locked = false;         // true while the app is moving pieces itself
+  let session = 0;            // bumped on every mode switch / puzzle load; cancels stale timers
+  let promoOverlay = null;    // the promotion picker, when open
 
-      onDrop: function (source, target) {
-        const move = game.move({ from: source, to: target, promotion: "q" });
-        if (move === null) return "snapback";
-        if (mode === "train") return handleTrainMove();
-        updateStatus();
-      },
+  // Mate trainer
+  let order = [], orderPos = -1;
+  let movesLeft = 0, mistakes = 0, hints = 0, finished = false;
 
-      onSnapEnd: function () { board.position(game.fen()); }
+  // Endgame puzzles
+  const endgameCache = {};    // category -> array of puzzles
+  let endgameData = [];
+  let currentCategory = "";
+  let currentEndgame = null;
+  let endgameMoveIndex = 1;   // index in puzzle.moves of the move the PLAYER must find
+  let endgameMistakes = 0;
+  let endgameHints = 0;
+  let endgameFinished = true; // true until a puzzle is loaded (blocks the board)
+  let lastPuzzleId = "";
+
+  // ============================================================
+  // 3. SAVED STATISTICS (separate for mate trainer and endgame puzzles)
+  // ============================================================
+  const MATE_KEY = "endgame-lab-stats";
+  const ENDGAME_KEY = "endgame-lab-endgame-stats";
+  function readStore(key, defaults) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? Object.assign({}, defaults, JSON.parse(raw)) : defaults;
+    } catch (e) { return defaults; }
+  }
+  function writeStore(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable */ }
+  }
+  let mateStats = readStore(MATE_KEY, { solved: 0, clean: 0, streak: 0, best: 0 });
+  let egStats = readStore(ENDGAME_KEY, { attempts: 0, solved: 0, clean: 0, streak: 0, best: 0, solvedIds: {} });
+  if (!egStats.solvedIds) egStats.solvedIds = {};
+
+  function renderMateStats() {
+    $("st-solved").textContent = mateStats.solved;
+    $("st-acc").textContent = mateStats.solved ? Math.round(100 * mateStats.clean / mateStats.solved) + "%" : "–";
+    $("st-streak").textContent = mateStats.streak;
+    $("st-best").textContent = mateStats.best;
+  }
+  function saveMateStats() { writeStore(MATE_KEY, mateStats); renderMateStats(); }
+
+  // The endgame stats box is created by this script, so no extra HTML is needed.
+  let egStatsBox = document.getElementById("endgame-stats");
+  if (!egStatsBox) {
+    egStatsBox = document.createElement("div");
+    egStatsBox.id = "endgame-stats";
+    egStatsBox.className = "eg-stats";
+    $("endgame-card").appendChild(egStatsBox);
+  }
+  function renderEndgameStats() {
+    const unique = Object.keys(egStats.solvedIds).length;
+    const acc = egStats.solved ? Math.round(100 * egStats.clean / egStats.solved) + "%" : "–";
+    egStatsBox.innerHTML =
+      "<b>Endgame puzzle stats</b><br>" +
+      "Attempted: " + egStats.attempts + " · Solved: " + egStats.solved + " (" + unique + " different)<br>" +
+      "Clean solves: " + acc + " · Streak: " + egStats.streak + " (best " + egStats.best + ")";
+  }
+  function saveEndgameStats() { writeStore(ENDGAME_KEY, egStats); renderEndgameStats(); }
+
+  // ============================================================
+  // 4. SMALL HELPERS
+  // ============================================================
+  function setStatus(html, bad) {
+    $("status").innerHTML = html;
+    $("status").classList.toggle("bad", !!bad);
+  }
+  function sideName(turn) { return turn === "w" ? "White" : "Black"; }
+
+  // Converts "e7e8q" into a chess.js move and plays it. Returns the move, or null if illegal.
+  function playUci(uci) {
+    return game.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: uci.length > 4 ? uci.charAt(4) : undefined
     });
+  }
 
-    // ---------- Free play ----------
-    function updateStatus() {
-      const turnLabel = $("turn-label");
-      if (game.in_checkmate()) {
-        setStatus("<strong>Checkmate!</strong><br>" + (game.turn() === "w" ? "Black" : "White") + " wins.");
-        turnLabel.textContent = "Game over"; return;
-      }
-      if (game.in_draw()) {
-        setStatus("<strong>Draw.</strong><br>The game has ended.");
-        turnLabel.textContent = "Game over"; return;
-      }
-      const side = game.turn() === "w" ? "White" : "Black";
-      turnLabel.textContent = side + " to move";
-      setStatus(game.in_check()
-        ? "<strong>Check!</strong><br>" + side + " must respond to the check."
-        : "<strong>Game in progress.</strong><br>" + side + " to move.");
+  // ============================================================
+  // 5. FREE PLAY STATUS
+  // ============================================================
+  function updateStatus() {
+    const turnLabel = $("turn-label");
+    if (game.in_checkmate()) {
+      setStatus("<strong>Checkmate!</strong><br>" + (game.turn() === "w" ? "Black" : "White") + " wins.");
+      turnLabel.textContent = "Game over";
+      return;
     }
+    if (game.in_draw()) {
+      setStatus("<strong>Draw.</strong><br>The game has ended.");
+      turnLabel.textContent = "Game over";
+      return;
+    }
+    const side = sideName(game.turn());
+    turnLabel.textContent = side + " to move";
+    setStatus(game.in_check()
+      ? "<strong>Check!</strong><br>" + side + " must respond to the check."
+      : "<strong>Game in progress.</strong><br>" + side + " to move.");
+  }
 
-    // ---------- Training ----------
-    function loadPuzzle(tries) {
-      tries = tries || 0;
-      orderPos = (orderPos + 1) % PUZZLES.length;
-      const p = PUZZLES[order[orderPos]];
-      game.load(p.fen);
-      // Safety: skip any puzzle that has no forced mate.
-      if (!canMate(p.n) && tries < PUZZLES.length) {
-        console.warn("Skipping broken puzzle:", p.title);
-        return loadPuzzle(tries + 1);
-      }
-      movesLeft = p.n; mistakes = 0; hints = 0; locked = false; finished = false;
+  // ============================================================
+  // 6. MATE TRAINER (mate-in-N solver; used ONLY by the mate trainer)
+  // ============================================================
+  function canMate(n) {
+    if (n < 1) return false;
+    const moves = game.moves();
+    for (let i = 0; i < moves.length; i++) {
+      game.move(moves[i]);
+      const ok = game.in_checkmate() || (n > 1 && defenderLoses(n - 1));
+      game.undo();
+      if (ok) return true;
+    }
+    return false;
+  }
+  function defenderLoses(n) {
+    if (game.in_checkmate()) return true;
+    if (game.game_over() || n < 1) return false;
+    const replies = game.moves();
+    for (let i = 0; i < replies.length; i++) {
+      game.move(replies[i]);
+      const ok = canMate(n);
+      game.undo();
+      if (!ok) return false;
+    }
+    return true;
+  }
+  function bestMove(n) {
+    const moves = game.moves({ verbose: true });
+    for (let i = 0; i < moves.length; i++) {
+      game.move(moves[i]);
+      const ok = game.in_checkmate() || (n > 1 && defenderLoses(n - 1));
+      game.undo();
+      if (ok) return moves[i];
+    }
+    return null;
+  }
+  function stubbornReply(maxN) {
+    const replies = game.moves();
+    let best = null, bestK = -1;
+    for (let i = 0; i < replies.length; i++) {
+      game.move(replies[i]);
+      let k = 1;
+      while (k <= maxN && !canMate(k)) k++;
+      game.undo();
+      if (k > bestK) { bestK = k; best = replies[i]; }
+    }
+    return best;
+  }
+
+  function loadPuzzle(tries) {
+    tries = tries || 0;
+    session++;
+    locked = false;
+    orderPos = (orderPos + 1) % PUZZLES.length;
+    const p = PUZZLES[order[orderPos]];
+    game.load(p.fen);
+    if (!canMate(p.n) && tries < PUZZLES.length) { // safety: skip a puzzle with no forced mate
+      console.warn("Skipping broken mate puzzle:", p.title);
+      return loadPuzzle(tries + 1);
+    }
+    movesLeft = p.n; mistakes = 0; hints = 0; finished = false;
+    board.position(game.fen());
+    board.orientation(game.turn() === "w" ? "white" : "black");
+    $("puzzle-title").textContent = "02 — " + p.title;
+    $("objective").textContent =
+      sideName(game.turn()) + " to move. Deliver checkmate in " + p.n + (p.n === 1 ? " move." : " moves.");
+    $("turn-label").textContent = "Puzzle " + (orderPos + 1) + " of " + PUZZLES.length;
+    $("next-button").classList.add("hidden");
+    $("hint-button").classList.remove("hidden");
+    setStatus("<strong>Find the mate.</strong><br>Mate in " + p.n + ". Hints reduce your clean-solve score.");
+  }
+
+  function handleTrainMove() {
+    const n = movesLeft;
+    if (game.in_checkmate()) { finishMatePuzzle(); return; }
+    if (!(n > 1 && defenderLoses(n - 1))) {
+      game.undo();
+      mistakes++;
+      setStatus("<strong>Not quite.</strong><br>That move doesn't force mate in " + n + ". Try again.", true);
+      return "snapback";
+    }
+    locked = true;
+    movesLeft = n - 1;
+    const mySession = session;
+    setTimeout(function () {
+      if (mySession !== session) return;
+      const reply = stubbornReply(movesLeft);
+      game.move(reply);
       board.position(game.fen());
-      board.orientation(game.turn() === "w" ? "white" : "black");
-      $("puzzle-title").textContent = "02 — " + p.title;
-      $("objective").textContent =
-        (game.turn() === "w" ? "White" : "Black") + " to move. Deliver checkmate in " +
-        p.n + (p.n === 1 ? " move." : " moves.");
-      $("turn-label").textContent = "Puzzle " + (orderPos + 1) + " of " + PUZZLES.length;
-      $("next-button").classList.add("hidden");
-      $("hint-button").classList.remove("hidden");
-      setStatus("<strong>Find the mate.</strong><br>Mate in " + p.n + ". Hints reduce your clean-solve score.");
+      locked = false;
+      setStatus("<strong>Good move.</strong><br>Opponent played " + reply + ". Now mate in " + movesLeft + ".");
+    }, 350);
+  }
+
+  
+function finishMatePuzzle() {
+    finished = true;
+    const clean = mistakes === 0 && hints === 0;
+    mateStats.solved++;
+
+    if (clean) {
+      mateStats.clean++;
+      mateStats.streak++;
+      mateStats.best = Math.max(mateStats.best, mateStats.streak);
+    } else {
+      mateStats.streak = 0;
     }
 
-    function handleTrainMove() {
-      const n = movesLeft;
-      if (game.in_checkmate()) { finishPuzzle(); return; }
-      if (!(n > 1 && defenderLoses(n - 1))) {
-        game.undo();
-        mistakes++;
-        setStatus("<strong>Not quite.</strong><br>That move doesn't force mate in " + n + ". Try again.", true);
-        return "snapback";
-      }
-      // Correct first step; opponent answers with their toughest defense.
-      locked = true;
-      movesLeft = n - 1;
-      setTimeout(function () {
-        const reply = stubbornReply(movesLeft);
-        game.move(reply);
-        board.position(game.fen());
+    saveMateStats();
+
+    setStatus("<strong>Checkmate — solved!</strong><br>" +
+      (clean
+        ? "Clean solve, no mistakes or hints."
+        : mistakes + " mistake" + (mistakes === 1 ? "" : "s") +
+          ", " + hints + " hint" + (hints === 1 ? "" : "s") + "."));
+
+    $("hint-button").classList.add("hidden");
+    $("next-button").classList.add("hidden");
+
+    setTimeout(() => {
+      loadPuzzle();
+    }, 1400);
+}
+
+  function mateHint() {
+    if (finished || locked) return;
+    const m = bestMove(movesLeft);
+    if (!m) return;
+    hints++;
+    const names = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
+    setStatus(hints === 1
+      ? "<strong>Hint:</strong><br>Look at your " + names[m.piece] + "."
+      : "<strong>Hint:</strong><br>Play " + m.san + ".");
+  }
+
+  // ============================================================
+  // 7. ENDGAME PUZZLES (Lichess data; NEVER uses the mate solver)
+  // ============================================================
+  // Lichess format: puzzle.fen is the position BEFORE moves[0].
+  // moves[0] = opponent's setup move (played automatically)
+  // moves[1] = the player's first move, moves[2] = automatic reply, moves[3] = player ... and so on.
+
+  function isValidPuzzle(p) {
+    return !!p && typeof p.fen === "string" && Array.isArray(p.moves) && p.moves.length >= 2 &&
+      p.moves.every(function (m) { return typeof m === "string" && UCI_PATTERN.test(m); });
+  }
+
+  async function loadEndgameData(category) {
+    if (endgameCache[category]) return endgameCache[category];
+    if (location.protocol === "file:") {
+      throw new Error("The page was opened as a file. Open it through the local server: http://localhost:8000/index_dev.html");
+    }
+    const response = await fetch("puzzles/" + category + "_endgames.json");
+    if (!response.ok) {
+      throw new Error("Could not load puzzles/" + category + "_endgames.json (HTTP " + response.status + ").");
+    }
+    const data = await response.json();
+    if (!Array.isArray(data) || !data.length) throw new Error("The " + category + " dataset is empty or not a list.");
+    endgameCache[category] = data;
+    return data;
+  }
+
+  // Loads the puzzle position and plays the setup move. Returns true on success.
+  function setupEndgamePosition(p) {
+    if (!isValidPuzzle(p)) return false;
+    if (!game.load(p.fen)) return false;
+    if (!playUci(p.moves[0])) return false;
+    return true;
+  }
+
+  function showEndgamePuzzle() {
+    const p = currentEndgame;
+    const side = sideName(game.turn());
+    board.position(game.fen());
+    board.orientation(game.turn() === "w" ? "white" : "black");
+    $("endgame-title").textContent =
+      (CATEGORY_NAMES[currentCategory] || currentCategory) + " endgame — Rating " + p.rating;
+
+    const themes = (p.themes || []).filter(function (t) { return t !== "endgame" && !/Endgame$/.test(t); });
+    const nice = themes.slice(0, 4).map(function (t) {
+      return THEME_NAMES[t] || t.replace(/([A-Z])/g, " $1").toLowerCase();
+    });
+    let goal = "Find the best move.";
+    const all = p.themes || [];
+    if (all.some(function (t) { return t === "mate" || /^mateIn\d/.test(t); })) goal = "Find the checkmate.";
+    else if (all.indexOf("equality") !== -1) goal = "You are worse. Find the moves that hold the draw.";
+    else if (all.indexOf("crushing") !== -1 || all.indexOf("advantage") !== -1) goal = "Find the moves that win material or convert the advantage.";
+    $("endgame-objective").textContent =
+      side + " to move. " + goal + (nice.length ? " Themes: " + nice.join(", ") + "." : "");
+
+    $("turn-label").textContent = side + " to move";
+    setStatus("<strong>Your move.</strong><br>" + side + " to move. Use Hint if you are stuck.");
+  }
+
+  // retry = true restarts the same puzzle (Reset button); otherwise loads a new random one.
+  async function startEndgamePuzzle(retry) {
+    const mySession = ++session;
+    locked = true;
+    closePromotion();
+    const category = $("category-select").value;
+
+    try {
+      if (retry && currentEndgame) {
+        if (!setupEndgamePosition(currentEndgame)) throw new Error("Could not restart this puzzle.");
+        endgameMoveIndex = 1;
+        endgameFinished = false;
+        showEndgamePuzzle();
         locked = false;
-        setStatus("<strong>Good move.</strong><br>Opponent played " + reply + ". Now mate in " + movesLeft + ".");
-      }, 350);
-    }
-
-    function finishPuzzle() {
-      finished = true;
-      const clean = mistakes === 0 && hints === 0;
-      stats.solved++;
-      if (clean) { stats.clean++; stats.streak++; stats.best = Math.max(stats.best, stats.streak); }
-      else stats.streak = 0;
-      saveStats();
-      setStatus("<strong>Checkmate — solved!</strong><br>" +
-        (clean ? "Clean solve, no mistakes or hints."
-               : mistakes + " mistake" + (mistakes === 1 ? "" : "s") + ", " +
-                 hints + " hint" + (hints === 1 ? "" : "s") + "."));
-      $("hint-button").classList.add("hidden");
-      $("next-button").classList.remove("hidden");
-    }
-
-    $("hint-button").addEventListener("click", function () {
-      if (finished || locked) return;
-      const m = bestMove(movesLeft);
-      if (!m) return;
-      hints++;
-      const names = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
-      setStatus(hints === 1
-        ? "<strong>Hint:</strong><br>Look at your " + names[m.piece] + "."
-        : "<strong>Hint:</strong><br>Play " + m.san + ".");
-    });
-
-    $("next-button").addEventListener("click", function () { loadPuzzle(); });
-
-    // ---------- Mode switching ----------
-    function setMode(m) {
-      mode = m;
-      $("mode-play").classList.toggle("on", m === "play");
-      $("mode-train").classList.toggle("on", m === "train");
-      $("play-card").classList.toggle("hidden", m !== "play");
-      $("solve-card").classList.toggle("hidden", m !== "train");
-      $("undo-button").classList.toggle("hidden", m === "train");
-      $("hint-button").classList.toggle("hidden", m !== "train");
-      $("next-button").classList.add("hidden");
-      $("mode-label").textContent = m === "train" ? "Training board" : "Practice board";
-      if (m === "train") {
-        order = PUZZLES.map((_, i) => i).sort(() => Math.random() - 0.5);
-        orderPos = -1;
-        loadPuzzle();
-      } else {
-        locked = false; finished = false;
-        game.reset(); board.start(); board.orientation("white"); updateStatus();
+        return;
       }
+
+      // Loading a new puzzle while the old one is unfinished counts as a skip.
+      if (currentEndgame && !endgameFinished) { egStats.streak = 0; saveEndgameStats(); }
+
+      $("endgame-objective").textContent = "Loading puzzle...";
+      endgameFinished = true;
+      const data = await loadEndgameData(category);
+      if (mySession !== session) return; // user switched mode or loaded another puzzle meanwhile
+      endgameData = data;
+      currentCategory = category;
+
+      // Pick a random puzzle whose data is valid and whose setup move works.
+      let chosen = null;
+      for (let tries = 0; tries < 60 && !chosen; tries++) {
+        const candidate = endgameData[Math.floor(Math.random() * endgameData.length)];
+        if (candidate.id !== lastPuzzleId && setupEndgamePosition(candidate)) chosen = candidate;
+      }
+      if (!chosen) {
+        for (let i = 0; i < endgameData.length && !chosen; i++) {
+          if (setupEndgamePosition(endgameData[i])) chosen = endgameData[i];
+        }
+      }
+      if (!chosen) throw new Error("No valid puzzle found in the " + category + " dataset.");
+
+      currentEndgame = chosen;
+      lastPuzzleId = chosen.id;
+      endgameMoveIndex = 1;
+      endgameMistakes = 0;
+      endgameHints = 0;
+      endgameFinished = false;
+      egStats.attempts++;
+      saveEndgameStats();
+      showEndgamePuzzle();
+      locked = false;
+    } catch (error) {
+      if (mySession !== session) return;
+      console.error(error);
+      currentEndgame = null;
+      endgameFinished = true;
+      locked = false;
+      $("endgame-objective").textContent = "Couldn't load puzzles. " + error.message;
+      setStatus("<strong>Puzzle problem.</strong><br>" + error.message +
+        "<br>Make sure the local server is running and the puzzles folder is next to index_dev.html.", true);
     }
-    $("mode-play").addEventListener("click", () => setMode("play"));
-    $("mode-train").addEventListener("click", () => setMode("train"));
+  }
 
-    // ---------- Shared buttons ----------
-    $("reset-button").addEventListener("click", function () {
-      if (mode === "train") { orderPos--; loadPuzzle(); return; }
-      game.reset(); board.start(); updateStatus();
-    });
-    $("flip-button").addEventListener("click", () => board.flip());
-    $("undo-button").addEventListener("click", function () {
-      game.undo(); board.position(game.fen()); updateStatus();
-    });
-    $("reset-stats").addEventListener("click", function () {
-      stats = { solved: 0, clean: 0, streak: 0, best: 0 }; saveStats();
-    });
-    window.addEventListener("resize", () => board.resize());
+  // ---------- Promotion picker ----------
+  function closePromotion() {
+    if (promoOverlay) { promoOverlay.remove(); promoOverlay = null; }
+  }
+  function askPromotion(color, onChoose, onCancel) {
+    closePromotion();
+    const glyphs = color === "w"
+      ? { q: "♕", r: "♖", b: "♗", n: "♘" }
+      : { q: "♛", r: "♜", b: "♝", n: "♞" };
+    const labels = { q: "Queen", r: "Rook", b: "Bishop", n: "Knight" };
 
-    renderStats();
+    promoOverlay = document.createElement("div");
+    promoOverlay.className = "promo-overlay";
+    const box = document.createElement("div");
+    box.className = "promo-box";
+    box.innerHTML = "<p>Promote to:</p>";
+    const row = document.createElement("div");
+    row.className = "promo-row";
+    ["q", "r", "b", "n"].forEach(function (piece) {
+      const b = document.createElement("button");
+      b.textContent = glyphs[piece];
+      b.title = labels[piece];
+      b.addEventListener("click", function () { closePromotion(); onChoose(piece); });
+      row.appendChild(b);
+    });
+    const cancel = document.createElement("button");
+    cancel.className = "promo-cancel";
+    cancel.textContent = "Cancel";
+    cancel.addEventListener("click", function () { closePromotion(); onCancel(); });
+    box.appendChild(row);
+    box.appendChild(cancel);
+    promoOverlay.appendChild(box);
+    document.body.appendChild(promoOverlay);
+  }
+
+  // Called from the board's drop handler in endgame mode.
+  function endgameDrop(source, target) {
+    if (source === target) return "snapback";
+    if (locked || endgameFinished || !currentEndgame || promoOverlay) return "snapback";
+
+    const candidates = game.moves({ square: source, verbose: true }).filter(function (m) { return m.to === target; });
+    if (!candidates.length) return "snapback"; // illegal move
+
+    if (candidates[0].promotion) {
+      locked = true; // freeze the board while the picker is open
+      const mySession = session;
+      askPromotion(game.turn(), function (piece) {
+        if (mySession !== session) return;
+        locked = false;
+        applyEndgameMove(source, target, piece);
+        board.position(game.fen());
+      }, function () {
+        if (mySession !== session) return;
+        locked = false;
+        board.position(game.fen());
+      });
+      return "snapback";
+    }
+    return applyEndgameMove(source, target, undefined);
+  }
+
+  // Checks the player's move against the stored solution. Returns "snapback" if it is wrong.
+  function applyEndgameMove(from, to, promo) {
+    const expected = currentEndgame.moves[endgameMoveIndex];
+    const mv = game.move({ from: from, to: to, promotion: promo });
+    if (!mv) return "snapback";
+
+    const played = mv.from + mv.to + (mv.promotion || "");
+    const mate = game.in_checkmate(); // Lichess accepts any checkmate
+    if (played !== expected && !mate) {
+      game.undo();
+      endgameMistakes++;
+      const t = currentEndgame.themes || [];
+      let tip = "Look for forcing moves: checks, captures and pawn pushes.";
+      if (t.indexOf("equality") !== -1) tip = "You are defending here. Look for the move that keeps the draw.";
+      else if (t.indexOf("crushing") !== -1 || t.indexOf("advantage") !== -1) tip = "Look for the move that wins material, activates your king or advances a passed pawn.";
+      setStatus("<strong>Not the move.</strong><br>" + mv.san + " is legal, but it is not the solution. " + tip +
+        " (Mistakes: " + endgameMistakes + ")", true);
+      return "snapback";
+    }
+
+    const replyIndex = endgameMoveIndex + 1;
+    if (mate || replyIndex >= currentEndgame.moves.length) {
+      endgameMoveIndex = replyIndex;
+      finishEndgame(mate && played !== expected);
+      return;
+    }
+
+    // Correct. Play the opponent's stored reply after a short pause.
+    locked = true;
+    setStatus("<strong>Correct!</strong><br>" + mv.san + " is right. Opponent is replying...");
+    const mySession = session;
+    setTimeout(function () {
+      if (mySession !== session) return;
+      const reply = playUci(currentEndgame.moves[replyIndex]);
+      if (!reply) {
+        endgameFinished = true;
+        locked = false;
+        setStatus("<strong>Puzzle data problem.</strong><br>The stored reply could not be played. Click Next puzzle.", true);
+        return;
+      }
+      board.position(game.fen());
+      endgameMoveIndex = replyIndex + 1;
+      locked = false;
+      if (endgameMoveIndex >= currentEndgame.moves.length) { finishEndgame(false); return; }
+      const side = sideName(game.turn());
+      $("turn-label").textContent = side + " to move";
+      setStatus("<strong>Good.</strong><br>Opponent played " + reply.san + ". Your move as " + side + ".");
+    }, 450);
+  }
+
+  function finishEndgame(altMate) {
+    endgameFinished = true;
+    locked = false;
+    const clean = endgameMistakes === 0 && endgameHints === 0;
+    egStats.solved++;
+    egStats.solvedIds[currentEndgame.id] = 1;
+    if (clean) { egStats.clean++; egStats.streak++; egStats.best = Math.max(egStats.best, egStats.streak); }
+    else egStats.streak = 0;
+    saveEndgameStats();
+    $("turn-label").textContent = "Solved";
+    setStatus("<strong>Puzzle solved!</strong><br>" +
+      (altMate ? "Checkmate: also accepted. " : "") +
+      (clean ? "Clean solve, no mistakes or hints."
+             : endgameMistakes + " mistake" + (endgameMistakes === 1 ? "" : "s") + ", " +
+               endgameHints + " hint" + (endgameHints === 1 ? "" : "s") + ".") +
+      "<br>Click Next puzzle for another.");
+  }
+
+  function endgameHint() {
+    if (!currentEndgame || endgameFinished || locked) return;
+    const expected = currentEndgame.moves[endgameMoveIndex];
+    endgameHints++;
+    if (endgameHints === 1) {
+      setStatus("<strong>Hint:</strong><br>Look at the piece on <strong>" + expected.slice(0, 2) + "</strong>.");
+      return;
+    }
+    const legal = game.moves({ verbose: true }).filter(function (m) {
+      return m.from === expected.slice(0, 2) && m.to === expected.slice(2, 4) &&
+        (!m.promotion || m.promotion === expected.charAt(4));
+    });
+    setStatus("<strong>Hint:</strong><br>Try <strong>" + (legal.length ? legal[0].san : expected) + "</strong>.");
+  }
+
+  // ============================================================
+  // 8. THE BOARD (one set of handlers for all three modes)
+  // ============================================================
+  const board = Chessboard("board", {
+    position: "start",
+    draggable: true,
+    pieceTheme: PIECE_URL,
+
+    onDragStart: function (source, piece) {
+      if (locked || promoOverlay) return false;
+      if (game.game_over()) return false;
+      if (currentMode === "train" && finished) return false;
+      if (currentMode === "endgame" && (endgameFinished || !currentEndgame)) return false;
+      if ((game.turn() === "w" && piece.indexOf("b") === 0) ||
+          (game.turn() === "b" && piece.indexOf("w") === 0)) return false;
+    },
+
+    onDrop: function (source, target) {
+      if (currentMode === "endgame") return endgameDrop(source, target);
+
+      const move = game.move({ from: source, to: target, promotion: "q" });
+      if (move === null) return "snapback";
+      if (currentMode === "train") return handleTrainMove();
+      updateStatus();
+    },
+
+    onSnapEnd: function () {
+      board.position(game.fen());
+    }
+  });
+
+  // ============================================================
+  // 9. MODE SWITCHING
+  // ============================================================
+  function setMode(m) {
+    session++;             // cancels timers and loads from the previous mode
+    closePromotion();
+    currentMode = m;
+    locked = false;
+
+    $("mode-play").classList.toggle("on", m === "play");
+    $("mode-train").classList.toggle("on", m === "train");
+    $("mode-endgame").classList.toggle("on", m === "endgame");
+
+    $("play-card").classList.toggle("hidden", m !== "play");
+    $("solve-card").classList.toggle("hidden", m !== "train");
+    $("endgame-card").classList.toggle("hidden", m !== "endgame");
+
+    $("undo-button").classList.toggle("hidden", m !== "play");
+    $("hint-button").classList.toggle("hidden", m === "play");
+    $("next-button").classList.toggle("hidden", m !== "endgame");
+    $("next-button").textContent = "Next puzzle";
+
+    $("mode-label").textContent =
+      m === "train" ? "Mate training" : m === "endgame" ? "Endgame training" : "Practice board";
+
+    if (m === "train") {
+      finished = false;
+      order = PUZZLES.map(function (_, i) { return i; }).sort(function () { return Math.random() - 0.5; });
+      orderPos = -1;
+      loadPuzzle();
+    } else if (m === "endgame") {
+      startEndgamePuzzle(false);
+    } else {
+      game.reset();
+      board.start();
+      board.orientation("white");
+      updateStatus();
+    }
+  }
+
+  // ============================================================
+  // 10. BUTTONS (each listener is added exactly once)
+  // ============================================================
+  $("mode-play").addEventListener("click", function () { setMode("play"); });
+  $("mode-train").addEventListener("click", function () { setMode("train"); });
+  $("mode-endgame").addEventListener("click", function () { setMode("endgame"); });
+
+  $("load-endgame").addEventListener("click", function () { startEndgamePuzzle(false); });
+  $("category-select").addEventListener("change", function () {
+    if (currentMode === "endgame") startEndgamePuzzle(false);
+  });
+
+  $("next-button").addEventListener("click", function () {
+    if (currentMode === "train") loadPuzzle();
+    else if (currentMode === "endgame") startEndgamePuzzle(false);
+  });
+
+  $("hint-button").addEventListener("click", function () {
+    if (currentMode === "train") mateHint();
+    else if (currentMode === "endgame") endgameHint();
+  });
+
+  $("reset-button").addEventListener("click", function () {
+    if (currentMode === "train") { orderPos--; loadPuzzle(); }
+    else if (currentMode === "endgame") startEndgamePuzzle(true);
+    else { game.reset(); board.start(); updateStatus(); }
+  });
+
+  $("flip-button").addEventListener("click", function () { board.flip(); });
+
+  $("undo-button").addEventListener("click", function () {
+    if (currentMode !== "play") return;
+    game.undo();
+    board.position(game.fen());
     updateStatus();
+  });
+
+  $("reset-stats").addEventListener("click", function () {
+    mateStats = { solved: 0, clean: 0, streak: 0, best: 0 };
+    saveMateStats();
+  });
+
+  window.addEventListener("resize", function () { board.resize(); });
+
+  // ============================================================
+  // 11. START
+  // ============================================================
+  renderMateStats();
+  renderEndgameStats();
+  setMode("play");
+  if (missingIds.length) {
+    console.warn("Endgame Lab: these HTML ids were not found:", missingIds.join(", "));
+    setStatus("<strong>Setup problem.</strong><br>Missing HTML ids: " + missingIds.join(", "), true);
+  }
+})();
   </script>
 </body>
 </html>
