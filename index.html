@@ -71,6 +71,25 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   .board-panel,.side-panel{padding:14px}
   header{padding:18px 5%}
 }
+
+/* Endgame academy + leaderboard */
+.academy{margin:16px 0;padding:14px;border:1px solid var(--border);border-radius:10px}
+.academy h3{margin:0 0 7px;font-size:15px}
+.academy p{color:var(--muted);font-size:13px;line-height:1.5}
+.academy-list{display:grid;gap:8px;margin-top:12px}
+.lesson{padding:11px;border:1px solid var(--border);border-radius:9px;background:#111812}
+.lesson summary{cursor:pointer;font-weight:bold;color:var(--text);line-height:1.4}
+.lesson p{margin:9px 0 0}
+.lesson .lesson-level{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.lesson button{margin-top:10px;width:100%;font-size:12px}
+.leaderboard{margin:16px 0;padding:14px;border:1px solid var(--border);border-radius:10px}
+.leaderboard h3{margin:0 0 7px;font-size:15px}
+.leaderboard input,.leaderboard select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:#111812;color:var(--text);margin:6px 0 10px}
+.leaderboard table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.leaderboard th,.leaderboard td{padding:7px 4px;text-align:left;border-bottom:1px solid var(--border)}
+.leaderboard th{color:var(--muted);font-weight:normal}
+.leaderboard-note{font-size:11px;color:var(--muted);line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -138,6 +157,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
         <option value="queen">Queen endgames</option>
       </select>
       <button id="load-endgame">Load endgame puzzle</button>
+      <p class="leaderboard-note">The four puzzle categories load from local JSON files. The Academy below includes lessons for theoretical endings that may not yet exist in those puzzle datasets.</p>
     </div>
 
     <div class="feature">
@@ -149,6 +169,92 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
         <div class="stat"><b id="st-best">0</b><span>Best streak</span></div>
       </div>
       <button class="link" id="reset-stats">Reset stats</button>
+    </div>
+
+    <div class="academy" id="academy-card">
+      <h3>Endgame Academy</h3>
+      <p>A guided curriculum from basic checkmates to difficult theoretical endings. Mate Trainer currently cycles through its built-in puzzle list; it does not unlock new puzzles as you solve them. Endgame Puzzles uses the JSON datasets in your puzzles folder, while these lessons teach the core ideas in plain language.</p>
+      <div class="academy-list" id="academy-list">
+        <details class="lesson" open>
+          <summary>1. King + queen vs king</summary>
+          <p class="lesson-level">Beginner · Basic checkmate</p>
+          <p>Use your queen to shrink the enemy king's box, then bring your own king closer. Avoid stalemate: if the enemy king has no legal move but is not in check, the game is a draw.</p>
+        </details>
+        <details class="lesson">
+          <summary>2. King + rook vs king</summary>
+          <p class="lesson-level">Beginner · Basic checkmate</p>
+          <p>Cut the king off with your rook, use your king to take away escape squares, and push the enemy king to an edge. Keep the rook protected and avoid allowing a stalemate.</p>
+        </details>
+        <details class="lesson">
+          <summary>3. Two bishops vs king</summary>
+          <p class="lesson-level">Intermediate · The bishop pair</p>
+          <p>The bishops control diagonals of both colours. Work with your king to drive the enemy king toward a corner, then use the bishops to cover the escape squares while delivering mate.</p>
+        </details>
+        <details class="lesson">
+          <summary>4. Bishop + knight vs king</summary>
+          <p class="lesson-level">Advanced · The difficult basic mate</p>
+          <p>This is a forced checkmate but requires precision. The bishop controls one colour complex; the knight helps cover the other colour's escape squares. Drive the king to a corner that matches your bishop's colour, using a repeatable W-shaped knight manoeuvre.</p>
+        </details>
+        <details class="lesson">
+          <summary>5. King + pawn vs king: opposition</summary>
+          <p class="lesson-level">Beginner · Pawn endings</p>
+          <p>Opposition means the kings face each other with one square between them. The side not to move often has the opposition. Use it to escort your pawn forward, but check whether the king can reach the promotion square in time.</p>
+        </details>
+        <details class="lesson">
+          <summary>6. The rule of the square</summary>
+          <p class="lesson-level">Beginner · Pawn race</p>
+          <p>Imagine a square from the pawn to its promotion square. If the defending king can enter that square when it is the king's turn to move, it can usually catch the pawn; otherwise the pawn promotes. Account for the pawn's two-square first move.</p>
+        </details>
+        <details class="lesson">
+          <summary>7. Rook endgames: activate the rook</summary>
+          <p class="lesson-level">Intermediate · Rook endings</p>
+          <p>Active rooks usually matter more than passive pawn-grabbing. Put the rook behind passed pawns, cut off the enemy king when possible, and activate your king. Rook endgames often require checking from behind rather than blocking the pawn directly.</p>
+        </details>
+        <details class="lesson">
+          <summary>8. Philidor defence</summary>
+          <p class="lesson-level">Advanced · Rook + pawn vs rook</p>
+          <p>In the classic rook-and-pawn-versus-rook setup, the defender can often draw by keeping the king in front of the pawn and the rook on the third rank until the pawn advances, then checking from behind or the side. Exact positions matter.</p>
+        </details>
+        <details class="lesson">
+          <summary>9. Lucena position</summary>
+          <p class="lesson-level">Advanced · Rook + pawn vs rook</p>
+          <p>A classic winning setup for the stronger side with a rook pawn or central pawn on the seventh rank and the king supporting it. The usual idea is to build a bridge with the rook to shield the king from checks while the pawn promotes.</p>
+        </details>
+        <details class="lesson">
+          <summary>10. Rook vs rook: draw-saving technique</summary>
+          <p class="lesson-level">Advanced · Defensive technique</p>
+          <p>Many rook endings are drawable with accurate defence. Look for checking distance, side checks, a king in front of the pawn, and whether the stronger side can escape perpetual checks. This is not one universal position: the pawn's file and rank change the result.</p>
+        </details>
+        <details class="lesson">
+          <summary>11. Bishop vs knight</summary>
+          <p class="lesson-level">Intermediate · Minor-piece endings</p>
+          <p>Bishops are strongest when play exists on both wings and pawns are on both colours. Knights can be strong with blocked pawns and fixed targets. Evaluate pawn structure, king activity, and whether the bishop is trapped behind its own pawns.</p>
+        </details>
+        <details class="lesson">
+          <summary>12. Queen vs king: avoid stalemate</summary>
+          <p class="lesson-level">Beginner · Conversion technique</p>
+          <p>Keep the opposing king boxed in without taking away every move unless the king is in check. Bring your king close before the final net, and always verify the position is checkmate rather than stalemate.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="leaderboard" id="leaderboard-card">
+      <h3>Local leaderboard</h3>
+      <p>Track your best results on this browser.</p>
+      <label for="player-name">Player name</label>
+      <input id="player-name" maxlength="20" placeholder="e.g. David" value="Player">
+      <label for="leaderboard-mode">Ranking</label>
+      <select id="leaderboard-mode">
+        <option value="endgame">Endgame puzzles</option>
+        <option value="mate">Mate trainer</option>
+        <option value="combined">Combined score</option>
+      </select>
+      <button id="save-leaderboard-score" class="primary">Save my score</button>
+      <table>
+        <thead><tr><th>#</th><th>Player</th><th>Solved</th><th>Clean</th><th>Best streak</th></tr></thead>
+        <tbody id="leaderboard-rows"><tr><td colspan="5">No scores saved yet.</td></tr></tbody>
+      </table>
+      <p class="leaderboard-note">This is a browser-local leaderboard, not a global online ranking. To rank different people across devices, the project will need an online database and account system.</p>
     </div>
   </aside>
 </main>
@@ -218,6 +324,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
 
   // ---------- Stats ----------
   const MATE_KEY = "endgame-lab-stats", ENDGAME_KEY = "endgame-lab-endgame-stats";
+  const LEADERBOARD_KEY = "endgame-lab-local-leaderboard";
   function readStore(key, defaults) {
     try { const raw = localStorage.getItem(key); return raw ? Object.assign({}, defaults, JSON.parse(raw)) : defaults; }
     catch (e) { return defaults; }
@@ -228,12 +335,14 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   if (!egStats.solvedIds) egStats.solvedIds = {};
 
   function renderMateStats() {
-    $("st-solved").textContent = mateStats.solved;
-    $("st-acc").textContent = mateStats.solved ? Math.round(100 * mateStats.clean / mateStats.solved) + "%" : "–";
-    $("st-streak").textContent = mateStats.streak;
-    $("st-best").textContent = mateStats.best;
+    const s = currentMode === "endgame" ? egStats : mateStats;
+    $("st-solved").textContent = s.solved;
+    $("st-acc").textContent = s.solved ? Math.round(100 * s.clean / s.solved) + "%" : "–";
+    $("st-streak").textContent = s.streak;
+    $("st-best").textContent = s.best;
   }
   function saveMateStats() { writeStore(MATE_KEY, mateStats); renderMateStats(); }
+  function renderActiveStats() { renderMateStats(); }
 
   const egStatsBox = document.createElement("div");
   egStatsBox.className = "eg-stats";
@@ -245,7 +354,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       " · Solved: " + egStats.solved + " (" + unique + " different)<br>Clean solves: " + acc +
       " · Streak: " + egStats.streak + " (best " + egStats.best + ")";
   }
-  function saveEndgameStats() { writeStore(ENDGAME_KEY, egStats); renderEndgameStats(); }
+  function saveEndgameStats() { writeStore(ENDGAME_KEY, egStats); renderEndgameStats(); renderActiveStats(); }
 
   // ---------- Helpers ----------
   function setStatus(html, bad) { $("status").innerHTML = html; $("status").classList.toggle("bad", !!bad); }
@@ -697,6 +806,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     $("hint-button").classList.toggle("hidden", m === "play");
     $("next-button").classList.toggle("hidden", m !== "endgame");
     $("mode-label").textContent = m === "train" ? "Mate training" : m === "endgame" ? "Endgame training" : "Practice board";
+    renderActiveStats();
 
     if (m === "train") {
       finished = false;
@@ -751,7 +861,65 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   });
   window.addEventListener("resize", function () { board.resize(); });
 
+
+  // ---------- Browser-local leaderboard ----------
+  function readLeaderboard() {
+    try {
+      const data = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+      return Array.isArray(data) ? data : [];
+    } catch (e) { return []; }
+  }
+  function renderLeaderboard() {
+    const body = $("leaderboard-rows");
+    const mode = $("leaderboard-mode").value;
+    let rows = readLeaderboard();
+    rows.sort(function (a, b) {
+      const scoreA = mode === "mate" ? a.mateSolved : mode === "endgame" ? a.egSolved : a.mateSolved + a.egSolved;
+      const scoreB = mode === "mate" ? b.mateSolved : mode === "endgame" ? b.egSolved : b.mateSolved + b.egSolved;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      const cleanA = mode === "mate" ? a.mateClean : mode === "endgame" ? a.egClean : a.mateClean + a.egClean;
+      const cleanB = mode === "mate" ? b.mateClean : mode === "endgame" ? b.egClean : b.mateClean + b.egClean;
+      if (cleanB !== cleanA) return cleanB - cleanA;
+      return (b.best || 0) - (a.best || 0);
+    });
+    body.innerHTML = "";
+    if (!rows.length) {
+      const tr = document.createElement("tr"), td = document.createElement("td");
+      td.colSpan = 5; td.textContent = "No scores saved yet.";
+      tr.appendChild(td); body.appendChild(tr); return;
+    }
+    rows.slice(0, 10).forEach(function (entry, i) {
+      const tr = document.createElement("tr");
+      const solved = mode === "mate" ? entry.mateSolved : mode === "endgame" ? entry.egSolved : entry.mateSolved + entry.egSolved;
+      const clean = mode === "mate" ? entry.mateClean : mode === "endgame" ? entry.egClean : entry.mateClean + entry.egClean;
+      [String(i + 1), entry.name, String(solved), String(clean), String(entry.best || 0)].forEach(function (value) {
+        const td = document.createElement("td"); td.textContent = value; tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+  }
+  function saveLeaderboardScore() {
+    const name = ($("player-name").value || "Player").trim().slice(0, 20) || "Player";
+    const rows = readLeaderboard();
+    const existing = rows.find(function (r) { return r.name.toLowerCase() === name.toLowerCase(); });
+    const entry = {
+      name: name,
+      mateSolved: mateStats.solved, mateClean: mateStats.clean,
+      egSolved: egStats.solved, egClean: egStats.clean,
+      best: Math.max(mateStats.best || 0, egStats.best || 0),
+      updated: Date.now()
+    };
+    if (existing) Object.assign(existing, entry);
+    else rows.push(entry);
+    try { localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows)); } catch (e) {}
+    renderLeaderboard();
+    setStatus("<strong>Score saved.</strong><br>Your local leaderboard entry has been updated.");
+  }
+  $("leaderboard-mode").addEventListener("change", renderLeaderboard);
+  $("save-leaderboard-score").addEventListener("click", saveLeaderboardScore);
+
   // ---------- Start ----------
+  renderLeaderboard();
   renderMateStats();
   renderEndgameStats();
   setMode("play");
