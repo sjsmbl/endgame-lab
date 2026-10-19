@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Endgame Lab | Chess Training</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+<style>
+:root{--background:#111512;--panel:#1c231e;--text:#edf4ed;--muted:#9ba99d;--accent:#b9e769;--border:#303b32;--bad:#ff8a7a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;background:var(--background);color:var(--text);font-family:Arial,sans-serif}
+header{padding:22px 7%;border-bottom:1px solid var(--border)}
+.brand{color:var(--accent);font-size:13px;font-weight:bold;letter-spacing:3px}
+.creator{margin:10px 0 0;color:var(--accent);font-size:14px;font-weight:bold;letter-spacing:1px;opacity:.9}
+h1{margin:8px 0 4px;font-size:clamp(28px,5vw,42px)}
+header p{margin:0;color:var(--muted)}
+main{display:grid;grid-template-columns:minmax(0,560px) minmax(240px,320px);gap:28px;justify-content:center;align-items:start;max-width:1100px;margin:36px auto;padding:0 20px}
+.board-panel,.side-panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px}
+#board{width:100%;max-width:520px;margin:0 auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.board-caption{display:flex;justify-content:space-between;gap:12px;margin-bottom:18px;font-size:13px;color:var(--muted)}
+.status{margin-top:18px;padding:14px;border-radius:9px;background:#111812;line-height:1.5}
+.status strong{color:var(--accent)}
+.status.bad strong{color:var(--bad)}
+.side-panel h2{margin-top:0;font-size:21px}
+.eyebrow{color:var(--accent);font-size:11px;font-weight:bold;letter-spacing:2px}
+.feature{margin:16px 0;padding:14px;border:1px solid var(--border);border-radius:10px}
+.feature h3{margin:0 0 7px;font-size:15px}
+.feature p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+button{border:1px solid var(--border);border-radius:9px;padding:12px 10px;min-height:44px;background:#29332b;color:var(--text);font-size:14px;font-weight:bold;cursor:pointer;touch-action:manipulation}
+button:hover{border-color:var(--accent)}
+button.on{border-color:var(--accent);color:var(--accent)}
+.primary{grid-column:1/-1;background:var(--accent);color:#182012;border-color:var(--accent)}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.modes button{padding:10px 6px;font-size:13px}
+.hidden{display:none!important}
+.settings{margin:16px 0;padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px}
+.setting-toggle{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;cursor:pointer}
+.setting-toggle input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.setting-description{margin:8px 0 0 30px;color:var(--muted);font-size:12px;line-height:1.5}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.stat{background:#111812;border-radius:8px;padding:8px;text-align:center}
+.stat b{display:block;font-size:20px;color:var(--accent)}
+.stat span{font-size:11px;color:var(--muted)}
+.link{margin-top:10px;padding:6px;min-height:0;background:none;border:none;color:var(--muted);font-size:12px;font-weight:normal;text-decoration:underline}
+.elo-card{margin:12px 0 4px;padding:14px;border:1px solid var(--accent);border-radius:12px;background:rgba(185,231,105,.06)}
+.elo-label{color:var(--accent);font-size:11px;font-weight:bold;letter-spacing:2px}
+.elo-row{display:flex;align-items:baseline;gap:10px}
+.elo-value{font-size:40px;font-weight:bold}
+.elo-delta{font-size:16px;font-weight:bold;color:var(--accent)}
+.elo-delta.neg{color:var(--bad)}
+.elo-sub{color:var(--muted);font-size:12px}
+footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+/* legal moves + selection + hint */
+#board [data-square]{position:relative}
+#board .sel{box-shadow:inset 0 0 0 4px rgba(185,231,105,.75)}
+#board .hint-sq{box-shadow:inset 0 0 0 4px rgba(255,200,60,.9)}
+#board .legal-move::after{content:"";position:absolute;left:50%;top:50%;width:30%;height:30%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(40,160,70,.8);pointer-events:none;z-index:3}
+#board .legal-capture::after{content:"";position:absolute;inset:3px;border-radius:50%;border:5px solid rgba(40,160,70,.85);pointer-events:none;z-index:3}
+/* endgame card */
+#endgame-card label{display:block;margin:14px 0 6px;font-size:13px;color:var(--muted)}
+#endgame-card select{width:100%;padding:12px;border-radius:9px;border:1px solid var(--border);background:#111812;color:var(--text);font-size:14px}
+.levels{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.levels button{padding:8px 6px;font-size:12px;line-height:1.3}
+.levels small{display:block;font-weight:normal;color:var(--muted);font-size:11px}
+#load-endgame{width:100%;margin-top:12px}
+.eg-stats{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;line-height:1.6;color:var(--muted)}
+.eg-stats b{color:var(--accent)}
+/* promotion picker */
+.promo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:1000}
+.promo-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;max-width:92vw}
+.promo-box p{margin:0 0 12px;font-weight:bold}
+.promo-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.promo-row button{font-size:34px;line-height:1;padding:10px 14px}
+.promo-cancel{margin-top:12px;font-size:13px!important;padding:8px 12px!important}
+@media (max-width:760px){
+  main{grid-template-columns:minmax(0,1fr);margin-top:20px;padding:0 12px}
+  .board-panel,.side-panel{padding:14px}
+  header{padding:18px 5%}
+}
+.academy-puzzle:hover{border-color:var(--accent)}
+/* Endgame academy + leaderboard */
+.academy h3{margin:0 0 7px;font-size:15px}
+.academy p{color:var(--muted);font-size:13px;line-height:1.5}
+.academy-list{display:grid;gap:8px;margin-top:12px}
+.lesson summary{cursor:pointer;font-weight:bold;color:var(--text);line-height:1.4}
+.lesson p{margin:9px 0 0}
+.lesson .lesson-level{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.lesson button{margin-top:10px;width:100%;font-size:12px}
+.leaderboard{margin:16px 0;padding:14px;border:1px solid var(--border);border-radius:10px}
+.leaderboard h3{margin:0 0 7px;font-size:15px}
+.leaderboard input,.leaderboard select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:#111812;color:var(--text);margin:6px 0 10px}
+.leaderboard table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.leaderboard th,.leaderboard td{padding:7px 4px;text-align:left;border-bottom:1px solid var(--border)}
+.leaderboard th{color:var(--muted);font-weight:normal}
+.leaderboard-note{font-size:11px;color:var(--muted);line-height:1.5}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">ENDGAME LAB</div>
+  <h1>Calculate. Convert. Survive.</h1>
+  <p>A chess training laboratory for the endgame.</p>
+  <p class="creator">@jmsbldy</p>
+</header>
+
+<main>
+  <section class="board-panel">
+    <div class="board-caption"><span id="mode-label">Practice board</span><span id="turn-label">White to move</span></div>
+    <div id="board"></div>
+    <div class="status" id="status" aria-live="polite"><strong>Ready to play.</strong><br>Drag a piece, or tap a piece and then tap a square.</div>
+    <div class="buttons">
+      <button id="reset-button" class="primary">Reset position</button>
+      <button id="flip-button">Flip board</button>
+      <button id="undo-button">Undo move</button>
+      <button id="hint-button" class="hidden">Hint</button>
+</div>
+  </section>
+
+  <aside class="side-panel">
+    <div class="eyebrow">TRAINING ROOM 01</div>
+    <h2>Your endgame journey</h2>
+    <div class="elo-card" id="elo-card">
+      <div class="elo-label">PRACTICE RATING</div>
+      <div class="elo-row"><span class="elo-value" id="elo-value">1200</span><span class="elo-delta" id="elo-delta" aria-live="polite"></span></div>
+      <div class="elo-sub" id="elo-sub">Training Elo</div>
+      <p class="leaderboard-note">A custom practice rating for this site only. It is not an official FIDE, Lichess or over-the-board rating. Reset stats does not change it.</p>
+      <button class="link" id="reset-elo">Reset Training Elo to 1200&hellip;</button>
+    </div>
+
+    <div class="modes">
+      <button id="mode-play" class="on">Free play</button>
+      <button id="mode-train">Mate trainer</button>
+      <button id="mode-endgame">Endgame puzzles</button>
+    </div>
+
+    <div class="settings">
+      <label class="setting-toggle"><input type="checkbox" id="legal-moves-toggle" checked><span>Show legal moves</span></label>
+      <p class="setting-description">Green dots show legal moves, rings show captures.</p>
+    </div>
+
+    <div class="feature" id="play-card">
+      <h3>01 — Play</h3>
+      <p>Make legal moves on the board. Try different plans and learn how the position changes.</p>
+    </div>
+
+    <div class="feature hidden" id="solve-card">
+      <h3 id="puzzle-title">02 — Solve</h3>
+      <p id="objective"></p><p id="mate-idea" class="setting-description" style="margin:8px 0 0"></p>
+    </div>
+
+    <div class="feature hidden" id="endgame-card">
+      <h3 id="endgame-title">Endgame puzzle</h3>
+      <p id="endgame-objective">Choose a category and level.</p>
+      <label>Difficulty</label>
+      <div class="levels" id="levels">
+        <button data-level="all" class="on">All levels</button>
+        <button data-level="beginner">Beginner<small>under 1200</small></button>
+        <button data-level="intermediate">Average<small>1200–1800</small></button>
+        <button data-level="expert">Expert<small>1800+</small></button>
+      </div>
+      <label for="category-select">Puzzle category</label>
+      <select id="category-select">
+        <option value="rook">Rook endgames</option>
+        <option value="pawn">Pawn endgames</option>
+        <option value="bishop">Bishop endgames</option>
+        <option value="queen">Queen endgames</option>
+      </select>
+      <button id="load-endgame">Load endgame puzzle</button>
+      <p class="leaderboard-note">The four puzzle categories load from local JSON files. The Academy below includes lessons for theoretical endings that may not yet exist in those puzzle datasets.</p>
+    </div>
+
+    <div class="feature">
+      <h3>03 — Improve</h3>
+      <div class="stats">
+        <div class="stat"><b id="st-solved">0</b><span>Solved</span></div>
+        <div class="stat"><b id="st-acc">–</b><span>Clean solves</span></div>
+        <div class="stat"><b id="st-streak">0</b><span>Streak</span></div>
+        <div class="stat"><b id="st-best">0</b><span>Best streak</span></div>
+      </div>
+      <button class="link" id="reset-stats">Reset stats</button>
+    </div>
+</aside>
+</main>
+
+<footer>ENDGAME LAB В· <a href="https://discord.gg/8NY3juw2X" target="_blank" rel="noopener noreferrer">Join our Discord</a></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  if (typeof Chess === "undefined" || typeof Chessboard === "undefined") {
+    alert("Endgame Lab: chess.js or chessboard.js did not load. Check your internet connection.");
+    return;
+  }
+
+  const missingIds = [];
+  function $(id) {
+    const el = document.getElementById(id);
+    if (el) return el;
+    if (missingIds.indexOf(id) === -1) missingIds.push(id);
+    return document.createElement("div");
+  }
+
+  // ---------- Data ----------
+  const PIECE_URL = "https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png";
+  const CATEGORY_NAMES = { rook: "Rook", pawn: "Pawn", bishop: "Bishop", queen: "Queen" };
+  const LEVELS = {
+    all: { name: "All levels", test: function () { return true; } },
+    beginner: { name: "Beginner", test: function (r) { return r < 1200; } },
+    intermediate: { name: "Average", test: function (r) { return r >= 1200 && r < 1800; } },
+    expert: { name: "Expert", test: function (r) { return r >= 1800; } }
+  };
+  const UCI_PATTERN = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
+  const THEME_NAMES = {
+    advantage: "Advantage", crushing: "Crushing", equality: "Equality", short: "Short", long: "Long",
+    veryLong: "Very long", oneMove: "One move", mate: "Mate", promotion: "Promotion",
+    advancedPawn: "Advanced pawn", zugzwang: "Zugzwang", fork: "Fork", pin: "Pin", skewer: "Skewer",
+    defensiveMove: "Defensive move", quietMove: "Quiet move", sacrifice: "Sacrifice",
+    underPromotion: "Underpromotion", backRankMate: "Back-rank mate"
+  };
+  const PUZZLES = [
+    { title: "Queen and king",        fen: "7k/5K2/8/8/8/8/8/6Q1 w - - 0 1",    n: 1 },
+    { title: "Back rank",             fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", n: 1 },
+    { title: "Rook and king",         fen: "k7/8/1K6/8/8/8/8/7R w - - 0 1",     n: 1 },
+    { title: "Rook on the 8th",       fen: "5k2/R7/5K2/8/8/8/8/8 w - - 0 1",    n: 1 },
+    { title: "Take away the squares", fen: "k7/8/2K5/8/8/8/8/Q7 w - - 0 1",     n: 2 },
+    { title: "Box in the king",       fen: "7k/8/5K2/8/8/8/8/Q7 w - - 0 1",     n: 2 }
+  ];
+
+  
+PUZZLES.push(
+  { title: "Smothered Mate 1", fen: "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1", n: 1, r: 1000 },
+  { title: "Smothered Mate 2", fen: "6rk/6pp/8/8/5N2/8/8/6K1 w - - 0 1", n: 1, r: 1000 },
+  { title: "Smothered Mate 3", fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", n: 1, r: 1000 },
+
+  { title: "Arabian Mate 1", fen: "7k/R7/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000 },
+  { title: "Arabian Mate 2", fen: "7k/1R6/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000 },
+  { title: "Arabian Mate 3", fen: "7k/2R5/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000 },
+
+  { title: "Anastasia Mate 1", fen: "8/4N1pk/8/8/8/8/2K5/3R4 w - - 0 1", n: 1, r: 1100 },
+  { title: "Anastasia Mate 2", fen: "8/4N1pk/8/8/8/8/2K5/1R6 w - - 0 1", n: 1, r: 1100 },
+  { title: "Anastasia Mate 3", fen: "8/4N1pk/8/8/8/8/2K5/R7 w - - 0 1", n: 1, r: 1100 },
+
+  { title: "Ladder Mate 1", fen: "6k1/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900 },
+  { title: "Ladder Mate 2", fen: "7k/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900 },
+  { title: "Ladder Mate 3", fen: "5k2/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900 }
+);
+PUZZLES.push(
+  { title: "Smothered mate", fen: "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1", n: 1, r: 1000,
+    idea: "A king hemmed in by its own pieces can be mated by a knight, which no slider can attack from a distance.",
+    goal: "Find the knight move that checks a king boxed in by its own pieces.",
+    hint: "Which square checks the king, cannot be captured, and leaves the king no flight squares?" },
+  { title: "Arabian mate", fen: "7k/R7/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000,
+    idea: "Rook and knight cooperate in the corner: the knight guards the rook and covers the escape square.",
+    goal: "Find the rook move that mates a king in the corner.",
+    hint: "Put the rook next to the king where the knight protects it." },
+  { title: "Anastasia's mate", fen: "8/4N1pk/8/8/8/8/2K5/3R4 w - - 0 1", n: 1, r: 1100,
+    idea: "A knight covers the escape squares on the g-file while a rook checks along the edge file; the king's own pawn blocks it.",
+    goal: "Find the rook move that mates the king on the edge.",
+    hint: "Which file does the rook need, and what do the knight and the pawn already take away?" },
+  { title: "Ladder mate", fen: "6k1/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900,
+    idea: "Two rooks take turns: one fences off a rank, the other checks on the next rank.",
+    goal: "Find the rook move that completes the ladder.",
+    hint: "One rook already cuts off a whole rank. Where can the other check on the edge?" }
+);
+
+// ---------- State ----------
+  const game = new Chess();
+  let currentMode = "play";
+  let locked = false;
+  let session = 0;
+  let promoOverlay = null;
+  let selected = null;
+
+  let order = [], orderPos = -1, movesLeft = 0, mistakes = 0, hints = 0, finished = false;
+
+  const endgameCache = {};
+  let currentLevel = "all", currentCategory = "", currentEndgame = null;
+  let endgameMoveIndex = 1, endgameMistakes = 0, endgameHints = 0, endgameFinished = true, lastPuzzleId = "";
+
+  // ---------- Stats ----------
+  const MATE_KEY = "endgame-lab-stats", ENDGAME_KEY = "endgame-lab-endgame-stats";
+  try { localStorage.removeItem("endgame-lab-local-leaderboard"); } catch (e) {}  function readStore(key, defaults) {
+    try { const raw = localStorage.getItem(key); return raw ? Object.assign({}, defaults, JSON.parse(raw)) : defaults; }
+    catch (e) { return defaults; }
+  }
+  function writeStore(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+  let mateStats = readStore(MATE_KEY, { solved: 0, clean: 0, streak: 0, best: 0 });
+  let egStats = readStore(ENDGAME_KEY, { attempts: 0, solved: 0, clean: 0, streak: 0, best: 0, solvedIds: {} });
+  if (!egStats.solvedIds) egStats.solvedIds = {};
+
+  function renderMateStats() {
+    const s = currentMode === "endgame" ? egStats : mateStats;
+    $("st-solved").textContent = s.solved;
+    $("st-acc").textContent = s.solved ? Math.round(100 * s.clean / s.solved) + "%" : "–";
+    $("st-streak").textContent = s.streak;
+    $("st-best").textContent = s.best;
+  }
+  function saveMateStats() { writeStore(MATE_KEY, mateStats); renderMateStats(); }
+  function renderActiveStats() { renderMateStats(); }
+
+  const egStatsBox = document.createElement("div");
+  egStatsBox.className = "eg-stats";
+  $("endgame-card").appendChild(egStatsBox);
+  function renderEndgameStats() {
+    const unique = Object.keys(egStats.solvedIds).length;
+    const acc = egStats.solved ? Math.round(100 * egStats.clean / egStats.solved) + "%" : "–";
+    egStatsBox.innerHTML = "<b>Endgame puzzle stats</b><br>Attempted: " + egStats.attempts +
+      " · Solved: " + egStats.solved + " (" + unique + " different)<br>Clean solves: " + acc +
+      " · Streak: " + egStats.streak + " (best " + egStats.best + ")";
+  }
+  function saveEndgameStats() { writeStore(ENDGAME_KEY, egStats); renderEndgameStats(); renderActiveStats(); }
+
+  // ---------- Training Elo: a custom PRACTICE rating (not FIDE/Lichess) ----------
+// Expected score E = 1/(1+10^((puzzleRating-elo)/400)); delta = round(K*(score-E)).
+// Solved score = 1 - 0.2*min(mistakes,3) - 0.15*min(hints,2), floored at 0.35. Abandoned (endgame puzzle skipped
+// via Next/level/category while unfinished) scores 0, with loss capped at 12. K = 24 for the first 20 results
+// (provisional), then 16. Gain <= 20, loss <= 20. Each puzzle settles once: retries never re-rate it.
+// Mate Trainer has no skip, so it is never penalised. Leaving the mode mid-puzzle is not penalised.
+const ELO_KEY = "endgame-lab-training-elo";
+function sanitizeElo(d) {
+  d = d && typeof d === "object" ? d : {};
+  const r = Number(d.rating), g = Number(d.games), l = Number(d.last);
+  return { rating: isFinite(r) ? Math.min(5000, Math.max(100, Math.round(r))) : 1200,
+           games: isFinite(g) && g > 0 ? Math.floor(g) : 0,
+           last: isFinite(l) ? Math.max(-100, Math.min(100, Math.round(l))) : 0 };
+}
+let elo = sanitizeElo(readStore(ELO_KEY, null));
+function renderElo() {
+  $("elo-value").textContent = elo.rating;
+  const dl = $("elo-delta");
+  dl.textContent = elo.last ? (elo.last > 0 ? "+" + elo.last : "\u2212" + Math.abs(elo.last)) : "";
+  dl.className = "elo-delta" + (elo.last < 0 ? " neg" : "");
+  $("elo-sub").textContent = "Training Elo \u00b7 " + (elo.games < 20 ? "provisional (" + elo.games + "/20 results)" : elo.games + " results");
+}
+function rateResult(puzzleRating, score, maxLoss) {
+  const raw = Number(puzzleRating);
+  const pr = isFinite(raw) ? Math.min(3000, Math.max(100, raw)) : 1200;
+  const e = 1 / (1 + Math.pow(10, (pr - elo.rating) / 400));
+  let d = Math.round((elo.games < 20 ? 24 : 16) * (score - e));
+  d = Math.max(-maxLoss, Math.min(20, d));
+  if (!isFinite(d)) d = 0;
+  const next = Math.max(100, Math.min(5000, elo.rating + d));
+  const actual = next - elo.rating;
+  elo = sanitizeElo({ rating: next, games: elo.games + 1, last: actual });
+  writeStore(ELO_KEY, elo); renderElo();
+}
+const ELO_RATED_KEY = "endgame-lab-elo-rated-puzzles";
+let ratedPuzzleIds = readStore(ELO_RATED_KEY, []);
+if (!Array.isArray(ratedPuzzleIds)) ratedPuzzleIds = [];
+const ratedPuzzleSet = new Set(ratedPuzzleIds.map(String));
+function settlePuzzleResult(key, puzzleRating, score, maxLoss) {
+  key = String(key || "");
+  if (!key || ratedPuzzleSet.has(key)) return false;
+  ratedPuzzleSet.add(key);
+  writeStore(ELO_RATED_KEY, Array.from(ratedPuzzleSet));
+  rateResult(puzzleRating, score, maxLoss);
+  return true;
+}
+function penalizeEloMistake() {
+  const next = Math.max(100, elo.rating - 3);
+  const delta = next - elo.rating;
+  elo = sanitizeElo({ rating: next, games: elo.games, last: delta });
+  writeStore(ELO_KEY, elo); renderElo();
+}
+function solveScore(m, h) {
+  return Math.max(0.35, 1 - 0.15 * Math.min(h, 2));
+}
+let mateSettled = false, mateRetry = false, mateEloM = 0, mateEloH = 0, eloEgSettled = true;
+function eloMateSolved() {
+  if (mateSettled) return; mateSettled = true;
+  const p = PUZZLES[order[orderPos]] || {};
+  settlePuzzleResult("mate:" + order[orderPos], p.r || 900 + 250 * ((p.n || 1) - 1), solveScore(mateEloM, mateEloH), 20);
+}
+function eloEndgameSolved() {
+  if (eloEgSettled || !currentEndgame) return; eloEgSettled = true;
+  settlePuzzleResult("endgame:" + (currentEndgame.id != null ? currentEndgame.id : (currentEndgame.fen || lastPuzzleId)), Number(currentEndgame.rating), solveScore(endgameMistakes, endgameHints), 20);
+}
+function eloEndgameAbandoned() {
+  if (eloEgSettled || !currentEndgame) return; eloEgSettled = true;
+  settlePuzzleResult("endgame:" + (currentEndgame.id != null ? currentEndgame.id : (currentEndgame.fen || lastPuzzleId)), Number(currentEndgame.rating), 0, 12);
+}
+$("reset-elo").addEventListener("click", function () {
+  if (!confirm("Reset Training Elo to 1200? Your practice rating and result count will be cleared. Puzzle statistics are not affected.")) return;
+  elo = sanitizeElo(null); writeStore(ELO_KEY, elo); renderElo();
+});
+renderElo();
+
+// ---------- Helpers ----------
+  function setStatus(html, bad) { $("status").innerHTML = html; $("status").classList.toggle("bad", !!bad); }
+  function sideName(t) { return t === "w" ? "White" : "Black"; }
+  function playUci(uci) {
+    return game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci.charAt(4) : undefined });
+  }
+  function syncBoard() { board.position(game.fen()); }
+
+  // ---------- Legal-move indicators ----------
+  function clearIndicators() {
+    document.querySelectorAll("#board .legal-move,#board .legal-capture,#board .sel").forEach(function (sq) {
+      sq.classList.remove("legal-move", "legal-capture", "sel");
+    });
+  }
+  function clearHint() {
+    document.querySelectorAll("#board .hint-sq").forEach(function (sq) { sq.classList.remove("hint-sq"); });
+  }
+  function clearSelection() { selected = null; clearIndicators(); }
+  function selectSquare(source) {
+    clearIndicators();
+    selected = source;
+    const el = document.querySelector('#board [data-square="' + source + '"]');
+    if (el) el.classList.add("sel");
+    if (!$("legal-moves-toggle").checked) return;
+    game.moves({ square: source, verbose: true }).forEach(function (m) {
+      const sq = document.querySelector('#board [data-square="' + m.to + '"]');
+      if (sq) sq.classList.add(m.flags.indexOf("c") !== -1 || m.flags.indexOf("e") !== -1 ? "legal-capture" : "legal-move");
+    });
+  }
+  $("legal-moves-toggle").addEventListener("change", function () {
+    if (selected) selectSquare(selected); else clearIndicators();
+  });
+
+  // ---------- Free play ----------
+  function updateStatus() {
+    if (game.in_checkmate()) {
+      setStatus("<strong>Checkmate!</strong><br>" + (game.turn() === "w" ? "Black" : "White") + " wins.");
+      $("turn-label").textContent = "Game over"; return;
+    }
+    if (game.in_draw()) { setStatus("<strong>Draw.</strong><br>The game has ended."); $("turn-label").textContent = "Game over"; return; }
+    const side = sideName(game.turn());
+    $("turn-label").textContent = side + " to move";
+    setStatus(game.in_check() ? "<strong>Check!</strong><br>" + side + " must respond to the check."
+                              : "<strong>Game in progress.</strong><br>" + side + " to move.");
+  }
+
+  // ---------- Mate trainer ----------
+  function canMate(n) {
+    if (n < 1) return false;
+    const moves = game.moves();
+    for (let i = 0; i < moves.length; i++) {
+      game.move(moves[i]);
+      const ok = game.in_checkmate() || (n > 1 && defenderLoses(n - 1));
+      game.undo();
+      if (ok) return true;
+    }
+    return false;
+  }
+  function defenderLoses(n) {
+    if (game.in_checkmate()) return true;
+    if (game.game_over() || n < 1) return false;
+    const replies = game.moves();
+    for (let i = 0; i < replies.length; i++) {
+      game.move(replies[i]);
+      const ok = canMate(n);
+      game.undo();
+      if (!ok) return false;
+    }
+    return true;
+  }
+  function bestMove(n) {
+    const moves = game.moves({ verbose: true });
+    for (let i = 0; i < moves.length; i++) {
+      game.move(moves[i]);
+      const ok = game.in_checkmate() || (n > 1 && defenderLoses(n - 1));
+      game.undo();
+      if (ok) return moves[i];
+    }
+    return null;
+  }
+  function stubbornReply(maxN) {
+    const replies = game.moves();
+    let best = replies[0], bestK = -1;
+    for (let i = 0; i < replies.length; i++) {
+      game.move(replies[i]);
+      let k = 1;
+      while (k <= maxN && !canMate(k)) k++;
+      game.undo();
+      if (k > bestK) { bestK = k; best = replies[i]; }
+    }
+    return best;
+  }
+
+  function loadPuzzle(tries, exactIndex) {
+    tries = tries || 0;
+    session++;
+    locked = false;
+    clearSelection(); clearHint();
+    if (typeof exactIndex === "number") {
+    order = PUZZLES.map(function (_, i) { return i; });
+    orderPos = exactIndex;
+  } else {
+    orderPos = (orderPos + 1) % PUZZLES.length;
+  }
+    const p = PUZZLES[order[orderPos]];
+    game.load(p.fen);
+    if (!canMate(p.n) && tries < PUZZLES.length && typeof exactIndex !== "number") return loadPuzzle(tries + 1);
+    movesLeft = p.n; mistakes = 0; hints = 0; finished = false; if (!mateRetry) { mateEloM = 0; mateEloH = 0; mateSettled = false; } mateRetry = false;
+    syncBoard();
+    board.orientation(game.turn() === "w" ? "white" : "black");
+    $("puzzle-title").textContent = "02 — " + p.title;
+    $("objective").textContent = sideName(game.turn()) + " to move. Deliver checkmate in " + p.n + (p.n === 1 ? " move." : " moves.");
+    $("objective").textContent += p.goal ? " " + p.goal : ""; $("mate-idea").textContent = p.idea ? "Idea: " + p.idea : ""; $("turn-label").textContent = "Puzzle " + (orderPos + 1) + " of " + PUZZLES.length;
+    $("hint-button").classList.remove("hidden");
+    setStatus("<strong>Find the mate.</strong><br>Mate in " + p.n + ". Hints reduce your clean-solve score.");
+  }
+
+  // Returns true if the move was accepted.
+  function handleTrainMove() {
+    const n = movesLeft;
+    if (game.in_checkmate()) { finishMatePuzzle(); return true; }
+    if (!(n > 1 && defenderLoses(n - 1))) {
+      game.undo();
+      mistakes++; mateEloM++; penalizeEloMistake();
+      setStatus("<strong>Not quite.</strong><br>That move doesn't force mate in " + n + ". Try again.", true);
+      return false;
+    }
+    locked = true;
+    movesLeft = n - 1;
+    const mySession = session;
+    setTimeout(function () {
+      if (mySession !== session) return;
+      const reply = stubbornReply(movesLeft);
+      game.move(reply);
+      syncBoard();
+      locked = false;
+      setStatus("<strong>Good move.</strong><br>Opponent played " + reply + ". Now mate in " + movesLeft + ".");
+    }, 350);
+    return true;
+  }
+
+  function finishMatePuzzle() {
+    finished = true;
+    const clean = mistakes === 0 && hints === 0;
+    mateStats.solved++;
+    if (clean) { mateStats.clean++; mateStats.streak++; mateStats.best = Math.max(mateStats.best, mateStats.streak); }
+    else mateStats.streak = 0;
+    saveMateStats();
+    setStatus("<strong>Checkmate — solved!</strong><br>" +
+      (clean ? "Clean solve, no mistakes or hints."
+             : mistakes + " mistake" + (mistakes === 1 ? "" : "s") + ", " + hints + " hint" + (hints === 1 ? "" : "s") + ".") +
+      "<br>Next puzzle loading...");
+    eloMateSolved(); $("hint-button").classList.add("hidden");
+    const mySession = session;
+    setTimeout(function () { if (mySession === session && currentMode === "train") loadPuzzle(); }, 1800);
+  }
+
+  function mateHint() {
+    if (finished || locked) return;
+    const m = bestMove(movesLeft);
+    if (!m) return;
+    hints++; mateEloH++;
+    const names = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
+    clearHint();
+    if (hints === 1) { const cp = PUZZLES[order[orderPos]]; if (cp && cp.hint) $("mate-idea").textContent = "Idea: " + cp.idea + " Hint: " + cp.hint;
+      setStatus("<strong>Hint:</strong><br>Look at your " + names[m.piece] + ".");
+      const el = document.querySelector('#board [data-square="' + m.from + '"]');
+      if (el) el.classList.add("hint-sq");
+    } else setStatus("<strong>Hint:</strong><br>Play " + m.san + ".");
+  }
+
+  // ---------- Endgame puzzles ----------
+  function isValidPuzzle(p) {
+    return !!p && typeof p.fen === "string" && Array.isArray(p.moves) && p.moves.length >= 2 &&
+      p.moves.every(function (m) { return typeof m === "string" && UCI_PATTERN.test(m); });
+  }
+
+  async function loadEndgameData(category, level) {
+    if (location.protocol === "file:") {
+      throw new Error("The page was opened as a file. Run a local server in this folder (python -m http.server 8000) and open http://localhost:8000/index_dev_v1.html");
+    }
+
+    const manifestKey = "manifest:" + category;
+    let manifest = endgameCache[manifestKey];
+
+    if (!manifest) {
+      const response = await fetch("puzzles_chunked/" + category + "/manifest.json");
+      if (!response.ok) {
+        throw new Error("Could not load the " + category + " puzzle manifest (HTTP " + response.status + ").");
+      }
+      manifest = await response.json();
+      if (!manifest || !Array.isArray(manifest.chunks) || !manifest.chunks.length) {
+        throw new Error("The " + category + " puzzle manifest is invalid or empty.");
+      }
+      endgameCache[manifestKey] = manifest;
+    }
+
+    const eligible = manifest.chunks.filter(function (chunk) {
+      if (level === "all") return chunk.count > 0;
+      return chunk.levels && Number(chunk.levels[level]) > 0;
+    });
+
+    if (!eligible.length) {
+      throw new Error("No " + LEVELS[level].name.toLowerCase() + " puzzles in the " + category + " set.");
+    }
+
+    // Select one eligible chunk; do not download the whole category.
+    const selected = eligible[Math.floor(Math.random() * eligible.length)];
+    const cacheKey = category + ":" + selected.file;
+    let data = endgameCache[cacheKey];
+
+    if (!data) {
+      const url = "puzzles_chunked/" + category + "/" + selected.file;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Could not load " + url + " (HTTP " + response.status + ").");
+      }
+      data = await response.json();
+      if (!Array.isArray(data) || !data.length) {
+        throw new Error("Puzzle chunk " + selected.file + " is invalid or empty.");
+      }
+      endgameCache[cacheKey] = data;
+    }
+
+    const pool = data.filter(function (p) {
+      return LEVELS[level].test(Number(p.rating));
+    });
+
+    if (!pool.length) {
+      throw new Error("The selected chunk contained no matching puzzles. Please load another puzzle.");
+    }
+
+    return pool;
+  }
+  function setupEndgamePosition(p) {
+    if (!isValidPuzzle(p)) return false;
+    if (!game.load(p.fen)) return false;
+    return !!playUci(p.moves[0]);
+  }
+
+  function showEndgamePuzzle() {
+    const p = currentEndgame, side = sideName(game.turn());
+    syncBoard();
+    board.orientation(game.turn() === "w" ? "white" : "black");
+    $("endgame-title").textContent = (CATEGORY_NAMES[currentCategory] || currentCategory) + " endgame — Rating " + p.rating;
+    const themes = (p.themes || []).filter(function (t) { return t !== "endgame" && !/Endgame$/.test(t); });
+    const nice = themes.slice(0, 4).map(function (t) { return THEME_NAMES[t] || t.replace(/([A-Z])/g, " $1").toLowerCase(); });
+    const all = p.themes || [];
+    let goal = "Find the best move.";
+    if (all.some(function (t) { return t === "mate" || /^mateIn\d/.test(t); })) goal = "Find the checkmate.";
+    else if (all.indexOf("equality") !== -1) goal = "You are worse. Find the moves that hold the draw.";
+    else if (all.indexOf("crushing") !== -1 || all.indexOf("advantage") !== -1) goal = "Find the moves that win material or convert the advantage.";
+    $("endgame-objective").textContent = side + " to move. " + goal + (nice.length ? " Themes: " + nice.join(", ") + "." : "");
+    $("turn-label").textContent = side + " to move";
+    setStatus("<strong>Your move.</strong><br>" + side + " to move. Use Hint if you are stuck.");
+  }
+
+  async function startEndgamePuzzle(retry) {
+    const mySession = ++session;
+    locked = true;
+    closePromotion(); clearSelection(); clearHint();
+    const category = $("category-select").value;
+    try {
+      if (retry && currentEndgame) {
+        if (!setupEndgamePosition(currentEndgame)) throw new Error("Could not restart this puzzle.");
+        endgameMoveIndex = 1; endgameFinished = false;
+        showEndgamePuzzle(); locked = false;
+        return;
+      }
+      if (currentEndgame && !endgameFinished) { eloEndgameAbandoned(); egStats.streak = 0; saveEndgameStats(); }
+      $("endgame-objective").textContent = "Loading puzzle...";
+      endgameFinished = true;
+      const pool = await loadEndgameData(category, currentLevel);
+      if (mySession !== session) return;
+      if (!pool.length) throw new Error("No " + LEVELS[currentLevel].name.toLowerCase() + " puzzles in the " + category + " set. Try another level.");
+      currentCategory = category;
+
+      let chosen = null;
+      for (let t = 0; t < 60 && !chosen; t++) {
+        const c = pool[Math.floor(Math.random() * pool.length)];
+        if (c.id !== lastPuzzleId && setupEndgamePosition(c)) chosen = c;
+      }
+      for (let i = 0; i < pool.length && !chosen; i++) if (setupEndgamePosition(pool[i])) chosen = pool[i];
+      if (!chosen) throw new Error("No valid puzzle found for this category and level.");
+
+      currentEndgame = chosen; lastPuzzleId = chosen.id; eloEgSettled = false;
+      endgameMoveIndex = 1; endgameMistakes = 0; endgameHints = 0; endgameFinished = false;
+      egStats.attempts++; saveEndgameStats();
+      showEndgamePuzzle();
+      locked = false;
+    } catch (error) {
+      if (mySession !== session) return;
+      console.error(error);
+      currentEndgame = null; endgameFinished = true; locked = false;
+      $("endgame-objective").textContent = "Couldn't load puzzles. " + error.message;
+      setStatus("<strong>Puzzle problem.</strong><br>" + error.message, true);
+    }
+  }
+
+  function applyEndgameMove(from, to, promo) {
+    if (endgameFinished || !currentEndgame) return false;
+    const expected = currentEndgame.moves[endgameMoveIndex];
+    const mv = game.move({ from: from, to: to, promotion: promo });
+    if (!mv) return false;
+    const played = mv.from + mv.to + (mv.promotion || "");
+    const mate = game.in_checkmate();
+    if (played !== expected && !mate) {
+      game.undo();
+      endgameMistakes++; penalizeEloMistake();
+      const t = currentEndgame.themes || [];
+      let tip = "Look for forcing moves: checks, captures and pawn pushes.";
+      if (t.indexOf("equality") !== -1) tip = "You are defending here. Look for the move that keeps the draw.";
+      else if (t.indexOf("crushing") !== -1 || t.indexOf("advantage") !== -1) tip = "Look for the move that wins material, activates your king or advances a passed pawn.";
+      setStatus("<strong>Not the move.</strong><br>" + mv.san + " is legal, but it is not the solution. " + tip + " (Mistakes: " + endgameMistakes + ")", true);
+      return false;
+    }
+    clearHint();
+    const replyIndex = endgameMoveIndex + 1;
+    if (mate || replyIndex >= currentEndgame.moves.length) {
+      endgameMoveIndex = replyIndex;
+      finishEndgame(mate && played !== expected);
+      return true;
+    }
+    locked = true;
+    setStatus("<strong>Correct!</strong><br>" + mv.san + " is right. Opponent is replying...");
+    const mySession = session;
+    setTimeout(function () {
+      if (mySession !== session) return;
+      const reply = playUci(currentEndgame.moves[replyIndex]);
+      if (!reply) {
+        endgameFinished = true; locked = false;
+        setStatus("<strong>Puzzle data problem.</strong><br>The stored reply could not be played. Try another puzzle.", true);
+        return;
+      }
+      syncBoard();
+      endgameMoveIndex = replyIndex + 1;
+      locked = false;
+      if (endgameMoveIndex >= currentEndgame.moves.length) { finishEndgame(false); return; }
+      const side = sideName(game.turn());
+      $("turn-label").textContent = side + " to move";
+      setStatus("<strong>Good.</strong><br>Opponent played " + reply.san + ". Your move as " + side + ".");
+    }, 450);
+    return true;
+  }
+
+  function finishEndgame(altMate) {
+    endgameFinished = true; locked = false;
+    const clean = endgameMistakes === 0 && endgameHints === 0;
+    eloEndgameSolved(); egStats.solved++;
+    egStats.solvedIds[currentEndgame.id] = 1;
+    if (clean) { egStats.clean++; egStats.streak++; egStats.best = Math.max(egStats.best, egStats.streak); }
+    else egStats.streak = 0;
+    saveEndgameStats();
+    $("turn-label").textContent = "Solved";
+    setStatus("<strong>Puzzle solved!</strong><br>" + (altMate ? "Checkmate: also accepted. " : "") +
+      (clean ? "Clean solve, no mistakes or hints."
+             : endgameMistakes + " mistake" + (endgameMistakes === 1 ? "" : "s") + ", " + endgameHints + " hint" + (endgameHints === 1 ? "" : "s") + ".") +
+      "<br>Loading the next puzzle...");
+    const solvedSession = session;
+    setTimeout(function () {
+      if (solvedSession === session && currentMode === "endgame" && endgameFinished) {
+        startEndgamePuzzle(false);
+      }
+    }, 1800);
+  }
+
+  function endgameHint() {
+    if (!currentEndgame || endgameFinished || locked) return;
+    const expected = currentEndgame.moves[endgameMoveIndex];
+    endgameHints++;
+    clearHint();
+    if (endgameHints === 1) {
+      setStatus("<strong>Hint:</strong><br>Look at the piece on <strong>" + expected.slice(0, 2) + "</strong>.");
+      const el = document.querySelector('#board [data-square="' + expected.slice(0, 2) + '"]');
+      if (el) el.classList.add("hint-sq");
+      return;
+    }
+    const legal = game.moves({ verbose: true }).filter(function (m) {
+      return m.from === expected.slice(0, 2) && m.to === expected.slice(2, 4) && (!m.promotion || m.promotion === expected.charAt(4));
+    });
+    setStatus("<strong>Hint:</strong><br>Try <strong>" + (legal.length ? legal[0].san : expected) + "</strong>.");
+  }
+
+  // ---------- Promotion picker ----------
+  function closePromotion() { if (promoOverlay) { promoOverlay.remove(); promoOverlay = null; } }
+  function askPromotion(color, onChoose, onCancel) {
+    closePromotion();
+    const glyphs = color === "w" ? { q: "\u2655", r: "\u2656", b: "\u2657", n: "\u2658" } : { q: "\u265B", r: "\u265C", b: "\u265D", n: "\u265E" };
+    const labels = { q: "Queen", r: "Rook", b: "Bishop", n: "Knight" };
+    promoOverlay = document.createElement("div");
+    promoOverlay.className = "promo-overlay";
+    const box = document.createElement("div");
+    box.className = "promo-box";
+    box.innerHTML = "<p>Promote to:</p>";
+    const row = document.createElement("div");
+    row.className = "promo-row";
+    ["q", "r", "b", "n"].forEach(function (piece) {
+      const b = document.createElement("button");
+      b.textContent = glyphs[piece]; b.title = labels[piece];
+      b.addEventListener("click", function () { closePromotion(); onChoose(piece); });
+      row.appendChild(b);
+    });
+    const cancel = document.createElement("button");
+    cancel.className = "promo-cancel"; cancel.textContent = "Cancel";
+    cancel.addEventListener("click", function () { closePromotion(); onCancel(); });
+    box.appendChild(row); box.appendChild(cancel);
+    promoOverlay.appendChild(box);
+    document.body.appendChild(promoOverlay);
+  }
+
+  // ---------- Move pipeline (shared by drag and tap) ----------
+  // Returns true (move made), "pending" (waiting for promotion choice) or false (rejected).
+  function tryMove(from, to, promo) {
+    if (locked || promoOverlay || game.game_over()) return false;
+    if (currentMode === "train" && finished) return false;
+    if (currentMode === "endgame" && (endgameFinished || !currentEndgame)) return false;
+    const cands = game.moves({ square: from, verbose: true }).filter(function (m) { return m.to === to; });
+    if (!cands.length) return false;
+    if (cands[0].promotion && !promo) {
+      locked = true;
+      const mySession = session;
+      askPromotion(game.turn(), function (piece) {
+        if (mySession !== session) return;
+        locked = false;
+        if (commitMove(from, to, piece)) syncBoard();
+      }, function () {
+        if (mySession !== session) return;
+        locked = false; syncBoard();
+      });
+      return "pending";
+    }
+    return commitMove(from, to, promo);
+  }
+
+  function commitMove(from, to, promo) {
+    if (currentMode === "endgame") return applyEndgameMove(from, to, promo);
+    const mv = game.move({ from: from, to: to, promotion: promo });
+    if (!mv) return false;
+    if (currentMode === "train") return handleTrainMove();
+    updateStatus();
+    return true;
+  }
+
+  // ---------- Board ----------
+  const board = Chessboard("board", {
+    position: "start",
+    draggable: true,
+    pieceTheme: PIECE_URL,
+
+    onDragStart: function (source, piece) {
+      if (locked || promoOverlay || game.game_over()) return false;
+      if (currentMode === "train" && finished) return false;
+      if (currentMode === "endgame" && (endgameFinished || !currentEndgame)) return false;
+      if ((game.turn() === "w" && piece.indexOf("b") === 0) || (game.turn() === "b" && piece.indexOf("w") === 0)) return false;
+      selectSquare(source);
+    },
+
+    onDrop: function (source, target) {
+      if (source === target) return "snapback"; // plain tap: keep the selection so the next tap can move
+      clearSelection();
+      return tryMove(source, target) === true ? undefined : "snapback";
+    },
+
+    onSnapEnd: function () { syncBoard(); }
+  });
+
+  // Tap-to-move: tap a piece (selected via onDragStart), then tap a destination.
+  const boardEl = document.getElementById("board");
+  let down = null;
+  boardEl.addEventListener("pointerdown", function (e) { down = { x: e.clientX, y: e.clientY }; });
+  boardEl.addEventListener("pointerup", function (e) {
+    const d = down; down = null;
+    if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return; // it was a drag
+    const sqEl = e.target.closest && e.target.closest("[data-square]");
+    if (!sqEl || !selected) return;
+    const to = sqEl.getAttribute("data-square");
+    if (to === selected) return;
+    const from = selected;
+    const r = tryMove(from, to);
+    if (r === true) { clearSelection(); syncBoard(); }
+    else if (r === "pending") clearSelection();
+    else {
+      const p = game.get(to);
+      if (!p || p.color !== game.turn()) clearSelection(); // tapped empty/enemy square that isn't legal
+    }
+  });
+
+  // ---------- Mode switching ----------
+  function setMode(m) {
+    session++;
+    closePromotion(); clearSelection(); clearHint();
+    currentMode = m; locked = false;
+    $("mode-play").classList.toggle("on", m === "play");
+    $("mode-train").classList.toggle("on", m === "train");
+    $("mode-endgame").classList.toggle("on", m === "endgame");
+    $("play-card").classList.toggle("hidden", m !== "play");
+    $("solve-card").classList.toggle("hidden", m !== "train");
+    $("endgame-card").classList.toggle("hidden", m !== "endgame");
+    $("undo-button").classList.toggle("hidden", m !== "play");
+    $("hint-button").classList.toggle("hidden", m === "play");
+    $("mode-label").textContent = m === "train" ? "Mate training" : m === "endgame" ? "Endgame training" : "Practice board";
+    renderActiveStats();
+
+    if (m === "train") {
+      finished = false;
+      order = PUZZLES.map(function (_, i) { return i; }).sort(function () { return Math.random() - 0.5; });
+      orderPos = -1;
+      loadPuzzle();
+    } else if (m === "endgame") {
+      if (currentEndgame && !endgameFinished) endgameFinished = true; // leaving mid-puzzle: start fresh
+      startEndgamePuzzle(false);
+    } else {
+      game.reset(); board.start(); board.orientation("white"); updateStatus();
+    }
+  }
+
+  // ---------- Buttons ----------
+  $("mode-play").addEventListener("click", function () { setMode("play");
+
+(function () {
+  const requestedPuzzle = new URLSearchParams(window.location.search).get("puzzle");
+  if (!requestedPuzzle) return;
+
+  const targetIndex = PUZZLES.findIndex(function (p) {
+    return p.title === requestedPuzzle;
+  });
+
+  if (targetIndex < 0) {
+    setStatus("<strong>Puzzle not found.</strong>", true);
+    return;
+  }
+
+  setMode("train");
+  order = PUZZLES.map(function (_, i) { return i; });
+  loadPuzzle(0, targetIndex);
+})(); });
+  $("mode-train").addEventListener("click", function () { setMode("train"); });
+  $("mode-endgame").addEventListener("click", function () { setMode("endgame"); });
+
+  $("levels").addEventListener("click", function (e) {
+    const btn = e.target.closest("button[data-level]");
+    if (!btn) return;
+    currentLevel = btn.getAttribute("data-level");
+    document.querySelectorAll("#levels button").forEach(function (b) { b.classList.toggle("on", b === btn); });
+    if (currentMode === "endgame") startEndgamePuzzle(false);
+  });
+  $("load-endgame").addEventListener("click", function () { startEndgamePuzzle(false); });
+  $("category-select").addEventListener("change", function () { if (currentMode === "endgame") startEndgamePuzzle(false); });
+$("hint-button").addEventListener("click", function () {
+    if (currentMode === "train") mateHint(); else if (currentMode === "endgame") endgameHint();
+  });
+  $("reset-button").addEventListener("click", function () {
+    clearSelection(); clearHint();
+    if (currentMode === "train") { orderPos--; mateRetry = true; loadPuzzle(); }
+    else if (currentMode === "endgame") startEndgamePuzzle(true);
+    else { game.reset(); board.start(); updateStatus(); }
+  });
+  $("flip-button").addEventListener("click", function () { board.flip(); clearSelection(); });
+  $("undo-button").addEventListener("click", function () {
+    if (currentMode !== "play") return;
+    clearSelection(); game.undo(); syncBoard(); updateStatus();
+  });
+  $("reset-stats").addEventListener("click", function () {
+    mateStats = { solved: 0, clean: 0, streak: 0, best: 0 };
+    egStats = { attempts: 0, solved: 0, clean: 0, streak: 0, best: 0, solvedIds: {} };
+    saveMateStats(); saveEndgameStats();
+  });
+  window.addEventListener("resize", function () { board.resize(); });
+
+
+
+  // ---------- Start ----------
+  renderMateStats();
+  renderEndgameStats();
+  setMode("play");
+
+(function () {
+  const requestedPuzzle = new URLSearchParams(window.location.search).get("puzzle");
+  if (!requestedPuzzle) return;
+
+  const targetIndex = PUZZLES.findIndex(function (p) {
+    return p.title === requestedPuzzle;
+  });
+
+  if (targetIndex < 0) {
+    setStatus("<strong>Puzzle not found.</strong>", true);
+    return;
+  }
+
+  setMode("train");
+  order = PUZZLES.map(function (_, i) { return i; });
+  loadPuzzle(0, targetIndex);
+})();
+  if (missingIds.length) setStatus("<strong>Setup problem.</strong><br>Missing HTML ids: " + missingIds.join(", "), true);
+})();
+</script>
+</body>
+</html>
