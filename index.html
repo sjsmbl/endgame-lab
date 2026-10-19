@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -43,6 +43,13 @@ button.on{border-color:var(--accent);color:var(--accent)}
 .stat b{display:block;font-size:20px;color:var(--accent)}
 .stat span{font-size:11px;color:var(--muted)}
 .link{margin-top:10px;padding:6px;min-height:0;background:none;border:none;color:var(--muted);font-size:12px;font-weight:normal;text-decoration:underline}
+.elo-card{margin:12px 0 4px;padding:14px;border:1px solid var(--accent);border-radius:12px;background:rgba(185,231,105,.06)}
+.elo-label{color:var(--accent);font-size:11px;font-weight:bold;letter-spacing:2px}
+.elo-row{display:flex;align-items:baseline;gap:10px}
+.elo-value{font-size:40px;font-weight:bold}
+.elo-delta{font-size:16px;font-weight:bold;color:var(--accent)}
+.elo-delta.neg{color:var(--bad)}
+.elo-sub{color:var(--muted);font-size:12px}
 footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
 /* legal moves + selection + hint */
 #board [data-square]{position:relative}
@@ -71,13 +78,11 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   .board-panel,.side-panel{padding:14px}
   header{padding:18px 5%}
 }
-
+.academy-puzzle:hover{border-color:var(--accent)}
 /* Endgame academy + leaderboard */
-.academy{margin:16px 0;padding:14px;border:1px solid var(--border);border-radius:10px}
 .academy h3{margin:0 0 7px;font-size:15px}
 .academy p{color:var(--muted);font-size:13px;line-height:1.5}
 .academy-list{display:grid;gap:8px;margin-top:12px}
-.lesson{padding:11px;border:1px solid var(--border);border-radius:9px;background:#111812}
 .lesson summary{cursor:pointer;font-weight:bold;color:var(--text);line-height:1.4}
 .lesson p{margin:9px 0 0}
 .lesson .lesson-level{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:1px}
@@ -110,13 +115,19 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       <button id="flip-button">Flip board</button>
       <button id="undo-button">Undo move</button>
       <button id="hint-button" class="hidden">Hint</button>
-      <button id="next-button" class="hidden">Next puzzle</button>
-    </div>
+</div>
   </section>
 
   <aside class="side-panel">
     <div class="eyebrow">TRAINING ROOM 01</div>
     <h2>Your endgame journey</h2>
+    <div class="elo-card" id="elo-card">
+      <div class="elo-label">PRACTICE RATING</div>
+      <div class="elo-row"><span class="elo-value" id="elo-value">1200</span><span class="elo-delta" id="elo-delta" aria-live="polite"></span></div>
+      <div class="elo-sub" id="elo-sub">Training Elo</div>
+      <p class="leaderboard-note">A custom practice rating for this site only. It is not an official FIDE, Lichess or over-the-board rating. Reset stats does not change it.</p>
+      <button class="link" id="reset-elo">Reset Training Elo to 1200&hellip;</button>
+    </div>
 
     <div class="modes">
       <button id="mode-play" class="on">Free play</button>
@@ -130,13 +141,13 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     </div>
 
     <div class="feature" id="play-card">
-      <h3>01 вЂ” Play</h3>
+      <h3>01 — Play</h3>
       <p>Make legal moves on the board. Try different plans and learn how the position changes.</p>
     </div>
 
     <div class="feature hidden" id="solve-card">
-      <h3 id="puzzle-title">02 вЂ” Solve</h3>
-      <p id="objective"></p>
+      <h3 id="puzzle-title">02 — Solve</h3>
+      <p id="objective"></p><p id="mate-idea" class="setting-description" style="margin:8px 0 0"></p>
     </div>
 
     <div class="feature hidden" id="endgame-card">
@@ -146,7 +157,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       <div class="levels" id="levels">
         <button data-level="all" class="on">All levels</button>
         <button data-level="beginner">Beginner<small>under 1200</small></button>
-        <button data-level="intermediate">Average<small>1200вЂ“1800</small></button>
+        <button data-level="intermediate">Average<small>1200–1800</small></button>
         <button data-level="expert">Expert<small>1800+</small></button>
       </div>
       <label for="category-select">Puzzle category</label>
@@ -161,105 +172,19 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     </div>
 
     <div class="feature">
-      <h3>03 вЂ” Improve</h3>
+      <h3>03 — Improve</h3>
       <div class="stats">
         <div class="stat"><b id="st-solved">0</b><span>Solved</span></div>
-        <div class="stat"><b id="st-acc">вЂ“</b><span>Clean solves</span></div>
+        <div class="stat"><b id="st-acc">–</b><span>Clean solves</span></div>
         <div class="stat"><b id="st-streak">0</b><span>Streak</span></div>
         <div class="stat"><b id="st-best">0</b><span>Best streak</span></div>
       </div>
       <button class="link" id="reset-stats">Reset stats</button>
     </div>
-
-    <div class="academy" id="academy-card">
-      <h3>Endgame Academy</h3>
-      <p>A guided curriculum from basic checkmates to difficult theoretical endings. Mate Trainer currently cycles through its built-in puzzle list; it does not unlock new puzzles as you solve them. Endgame Puzzles uses the JSON datasets in your puzzles folder, while these lessons teach the core ideas in plain language.</p>
-      <div class="academy-list" id="academy-list">
-        <details class="lesson" open>
-          <summary>1. King + queen vs king</summary>
-          <p class="lesson-level">Beginner В· Basic checkmate</p>
-          <p>Use your queen to shrink the enemy king's box, then bring your own king closer. Avoid stalemate: if the enemy king has no legal move but is not in check, the game is a draw.</p>
-        </details>
-        <details class="lesson">
-          <summary>2. King + rook vs king</summary>
-          <p class="lesson-level">Beginner В· Basic checkmate</p>
-          <p>Cut the king off with your rook, use your king to take away escape squares, and push the enemy king to an edge. Keep the rook protected and avoid allowing a stalemate.</p>
-        </details>
-        <details class="lesson">
-          <summary>3. Two bishops vs king</summary>
-          <p class="lesson-level">Intermediate В· The bishop pair</p>
-          <p>The bishops control diagonals of both colours. Work with your king to drive the enemy king toward a corner, then use the bishops to cover the escape squares while delivering mate.</p>
-        </details>
-        <details class="lesson">
-          <summary>4. Bishop + knight vs king</summary>
-          <p class="lesson-level">Advanced В· The difficult basic mate</p>
-          <p>This is a forced checkmate but requires precision. The bishop controls one colour complex; the knight helps cover the other colour's escape squares. Drive the king to a corner that matches your bishop's colour, using a repeatable W-shaped knight manoeuvre.</p>
-        </details>
-        <details class="lesson">
-          <summary>5. King + pawn vs king: opposition</summary>
-          <p class="lesson-level">Beginner В· Pawn endings</p>
-          <p>Opposition means the kings face each other with one square between them. The side not to move often has the opposition. Use it to escort your pawn forward, but check whether the king can reach the promotion square in time.</p>
-        </details>
-        <details class="lesson">
-          <summary>6. The rule of the square</summary>
-          <p class="lesson-level">Beginner В· Pawn race</p>
-          <p>Imagine a square from the pawn to its promotion square. If the defending king can enter that square when it is the king's turn to move, it can usually catch the pawn; otherwise the pawn promotes. Account for the pawn's two-square first move.</p>
-        </details>
-        <details class="lesson">
-          <summary>7. Rook endgames: activate the rook</summary>
-          <p class="lesson-level">Intermediate В· Rook endings</p>
-          <p>Active rooks usually matter more than passive pawn-grabbing. Put the rook behind passed pawns, cut off the enemy king when possible, and activate your king. Rook endgames often require checking from behind rather than blocking the pawn directly.</p>
-        </details>
-        <details class="lesson">
-          <summary>8. Philidor defence</summary>
-          <p class="lesson-level">Advanced В· Rook + pawn vs rook</p>
-          <p>In the classic rook-and-pawn-versus-rook setup, the defender can often draw by keeping the king in front of the pawn and the rook on the third rank until the pawn advances, then checking from behind or the side. Exact positions matter.</p>
-        </details>
-        <details class="lesson">
-          <summary>9. Lucena position</summary>
-          <p class="lesson-level">Advanced В· Rook + pawn vs rook</p>
-          <p>A classic winning setup for the stronger side with a rook pawn or central pawn on the seventh rank and the king supporting it. The usual idea is to build a bridge with the rook to shield the king from checks while the pawn promotes.</p>
-        </details>
-        <details class="lesson">
-          <summary>10. Rook vs rook: draw-saving technique</summary>
-          <p class="lesson-level">Advanced В· Defensive technique</p>
-          <p>Many rook endings are drawable with accurate defence. Look for checking distance, side checks, a king in front of the pawn, and whether the stronger side can escape perpetual checks. This is not one universal position: the pawn's file and rank change the result.</p>
-        </details>
-        <details class="lesson">
-          <summary>11. Bishop vs knight</summary>
-          <p class="lesson-level">Intermediate В· Minor-piece endings</p>
-          <p>Bishops are strongest when play exists on both wings and pawns are on both colours. Knights can be strong with blocked pawns and fixed targets. Evaluate pawn structure, king activity, and whether the bishop is trapped behind its own pawns.</p>
-        </details>
-        <details class="lesson">
-          <summary>12. Queen vs king: avoid stalemate</summary>
-          <p class="lesson-level">Beginner В· Conversion technique</p>
-          <p>Keep the opposing king boxed in without taking away every move unless the king is in check. Bring your king close before the final net, and always verify the position is checkmate rather than stalemate.</p>
-        </details>
-      </div>
-    </div>
-
-    <div class="leaderboard" id="leaderboard-card">
-      <h3>Local leaderboard</h3>
-      <p>Track your best results on this browser.</p>
-      <label for="player-name">Player name</label>
-      <input id="player-name" maxlength="20" placeholder="e.g. David" value="Player">
-      <label for="leaderboard-mode">Ranking</label>
-      <select id="leaderboard-mode">
-        <option value="endgame">Endgame puzzles</option>
-        <option value="mate">Mate trainer</option>
-        <option value="combined">Combined score</option>
-      </select>
-      <button id="save-leaderboard-score" class="primary">Save my score</button>
-      <table>
-        <thead><tr><th>#</th><th>Player</th><th>Solved</th><th>Clean</th><th>Best streak</th></tr></thead>
-        <tbody id="leaderboard-rows"><tr><td colspan="5">No scores saved yet.</td></tr></tbody>
-      </table>
-      <p class="leaderboard-note">This is a browser-local leaderboard, not a global online ranking. To rank different people across devices, the project will need an online database and account system.</p>
-    </div>
-  </aside>
+</aside>
 </main>
 
-<footer>ENDGAME LAB В· An independent chess training project</footer>
+<footer>ENDGAME LAB В· <a href="https://discord.gg/8NY3juw2X" target="_blank" rel="noopener noreferrer">Join our Discord</a></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -308,7 +233,44 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     { title: "Box in the king",       fen: "7k/8/5K2/8/8/8/8/Q7 w - - 0 1",     n: 2 }
   ];
 
-  // ---------- State ----------
+  
+PUZZLES.push(
+  { title: "Smothered Mate 1", fen: "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1", n: 1, r: 1000 },
+  { title: "Smothered Mate 2", fen: "6rk/6pp/8/8/5N2/8/8/6K1 w - - 0 1", n: 1, r: 1000 },
+  { title: "Smothered Mate 3", fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", n: 1, r: 1000 },
+
+  { title: "Arabian Mate 1", fen: "7k/R7/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000 },
+  { title: "Arabian Mate 2", fen: "7k/1R6/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000 },
+  { title: "Arabian Mate 3", fen: "7k/2R5/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000 },
+
+  { title: "Anastasia Mate 1", fen: "8/4N1pk/8/8/8/8/2K5/3R4 w - - 0 1", n: 1, r: 1100 },
+  { title: "Anastasia Mate 2", fen: "8/4N1pk/8/8/8/8/2K5/1R6 w - - 0 1", n: 1, r: 1100 },
+  { title: "Anastasia Mate 3", fen: "8/4N1pk/8/8/8/8/2K5/R7 w - - 0 1", n: 1, r: 1100 },
+
+  { title: "Ladder Mate 1", fen: "6k1/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900 },
+  { title: "Ladder Mate 2", fen: "7k/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900 },
+  { title: "Ladder Mate 3", fen: "5k2/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900 }
+);
+PUZZLES.push(
+  { title: "Smothered mate", fen: "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1", n: 1, r: 1000,
+    idea: "A king hemmed in by its own pieces can be mated by a knight, which no slider can attack from a distance.",
+    goal: "Find the knight move that checks a king boxed in by its own pieces.",
+    hint: "Which square checks the king, cannot be captured, and leaves the king no flight squares?" },
+  { title: "Arabian mate", fen: "7k/R7/5N2/8/8/8/8/K7 w - - 0 1", n: 1, r: 1000,
+    idea: "Rook and knight cooperate in the corner: the knight guards the rook and covers the escape square.",
+    goal: "Find the rook move that mates a king in the corner.",
+    hint: "Put the rook next to the king where the knight protects it." },
+  { title: "Anastasia's mate", fen: "8/4N1pk/8/8/8/8/2K5/3R4 w - - 0 1", n: 1, r: 1100,
+    idea: "A knight covers the escape squares on the g-file while a rook checks along the edge file; the king's own pawn blocks it.",
+    goal: "Find the rook move that mates the king on the edge.",
+    hint: "Which file does the rook need, and what do the knight and the pawn already take away?" },
+  { title: "Ladder mate", fen: "6k1/R7/8/8/8/8/8/1R4K1 w - - 0 1", n: 1, r: 900,
+    idea: "Two rooks take turns: one fences off a rank, the other checks on the next rank.",
+    goal: "Find the rook move that completes the ladder.",
+    hint: "One rook already cuts off a whole rank. Where can the other check on the edge?" }
+);
+
+// ---------- State ----------
   const game = new Chess();
   let currentMode = "play";
   let locked = false;
@@ -324,8 +286,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
 
   // ---------- Stats ----------
   const MATE_KEY = "endgame-lab-stats", ENDGAME_KEY = "endgame-lab-endgame-stats";
-  const LEADERBOARD_KEY = "endgame-lab-local-leaderboard";
-  function readStore(key, defaults) {
+  try { localStorage.removeItem("endgame-lab-local-leaderboard"); } catch (e) {}  function readStore(key, defaults) {
     try { const raw = localStorage.getItem(key); return raw ? Object.assign({}, defaults, JSON.parse(raw)) : defaults; }
     catch (e) { return defaults; }
   }
@@ -337,7 +298,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   function renderMateStats() {
     const s = currentMode === "endgame" ? egStats : mateStats;
     $("st-solved").textContent = s.solved;
-    $("st-acc").textContent = s.solved ? Math.round(100 * s.clean / s.solved) + "%" : "вЂ“";
+    $("st-acc").textContent = s.solved ? Math.round(100 * s.clean / s.solved) + "%" : "–";
     $("st-streak").textContent = s.streak;
     $("st-best").textContent = s.best;
   }
@@ -349,14 +310,89 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   $("endgame-card").appendChild(egStatsBox);
   function renderEndgameStats() {
     const unique = Object.keys(egStats.solvedIds).length;
-    const acc = egStats.solved ? Math.round(100 * egStats.clean / egStats.solved) + "%" : "вЂ“";
+    const acc = egStats.solved ? Math.round(100 * egStats.clean / egStats.solved) + "%" : "–";
     egStatsBox.innerHTML = "<b>Endgame puzzle stats</b><br>Attempted: " + egStats.attempts +
-      " В· Solved: " + egStats.solved + " (" + unique + " different)<br>Clean solves: " + acc +
-      " В· Streak: " + egStats.streak + " (best " + egStats.best + ")";
+      " · Solved: " + egStats.solved + " (" + unique + " different)<br>Clean solves: " + acc +
+      " · Streak: " + egStats.streak + " (best " + egStats.best + ")";
   }
   function saveEndgameStats() { writeStore(ENDGAME_KEY, egStats); renderEndgameStats(); renderActiveStats(); }
 
-  // ---------- Helpers ----------
+  // ---------- Training Elo: a custom PRACTICE rating (not FIDE/Lichess) ----------
+// Expected score E = 1/(1+10^((puzzleRating-elo)/400)); delta = round(K*(score-E)).
+// Solved score = 1 - 0.2*min(mistakes,3) - 0.15*min(hints,2), floored at 0.35. Abandoned (endgame puzzle skipped
+// via Next/level/category while unfinished) scores 0, with loss capped at 12. K = 24 for the first 20 results
+// (provisional), then 16. Gain <= 20, loss <= 20. Each puzzle settles once: retries never re-rate it.
+// Mate Trainer has no skip, so it is never penalised. Leaving the mode mid-puzzle is not penalised.
+const ELO_KEY = "endgame-lab-training-elo";
+function sanitizeElo(d) {
+  d = d && typeof d === "object" ? d : {};
+  const r = Number(d.rating), g = Number(d.games), l = Number(d.last);
+  return { rating: isFinite(r) ? Math.min(5000, Math.max(100, Math.round(r))) : 1200,
+           games: isFinite(g) && g > 0 ? Math.floor(g) : 0,
+           last: isFinite(l) ? Math.max(-100, Math.min(100, Math.round(l))) : 0 };
+}
+let elo = sanitizeElo(readStore(ELO_KEY, null));
+function renderElo() {
+  $("elo-value").textContent = elo.rating;
+  const dl = $("elo-delta");
+  dl.textContent = elo.last ? (elo.last > 0 ? "+" + elo.last : "\u2212" + Math.abs(elo.last)) : "";
+  dl.className = "elo-delta" + (elo.last < 0 ? " neg" : "");
+  $("elo-sub").textContent = "Training Elo \u00b7 " + (elo.games < 20 ? "provisional (" + elo.games + "/20 results)" : elo.games + " results");
+}
+function rateResult(puzzleRating, score, maxLoss) {
+  const raw = Number(puzzleRating);
+  const pr = isFinite(raw) ? Math.min(3000, Math.max(100, raw)) : 1200;
+  const e = 1 / (1 + Math.pow(10, (pr - elo.rating) / 400));
+  let d = Math.round((elo.games < 20 ? 24 : 16) * (score - e));
+  d = Math.max(-maxLoss, Math.min(20, d));
+  if (!isFinite(d)) d = 0;
+  const next = Math.max(100, Math.min(5000, elo.rating + d));
+  const actual = next - elo.rating;
+  elo = sanitizeElo({ rating: next, games: elo.games + 1, last: actual });
+  writeStore(ELO_KEY, elo); renderElo();
+}
+const ELO_RATED_KEY = "endgame-lab-elo-rated-puzzles";
+let ratedPuzzleIds = readStore(ELO_RATED_KEY, []);
+if (!Array.isArray(ratedPuzzleIds)) ratedPuzzleIds = [];
+const ratedPuzzleSet = new Set(ratedPuzzleIds.map(String));
+function settlePuzzleResult(key, puzzleRating, score, maxLoss) {
+  key = String(key || "");
+  if (!key || ratedPuzzleSet.has(key)) return false;
+  ratedPuzzleSet.add(key);
+  writeStore(ELO_RATED_KEY, Array.from(ratedPuzzleSet));
+  rateResult(puzzleRating, score, maxLoss);
+  return true;
+}
+function penalizeEloMistake() {
+  const next = Math.max(100, elo.rating - 3);
+  const delta = next - elo.rating;
+  elo = sanitizeElo({ rating: next, games: elo.games, last: delta });
+  writeStore(ELO_KEY, elo); renderElo();
+}
+function solveScore(m, h) {
+  return Math.max(0.35, 1 - 0.15 * Math.min(h, 2));
+}
+let mateSettled = false, mateRetry = false, mateEloM = 0, mateEloH = 0, eloEgSettled = true;
+function eloMateSolved() {
+  if (mateSettled) return; mateSettled = true;
+  const p = PUZZLES[order[orderPos]] || {};
+  settlePuzzleResult("mate:" + order[orderPos], p.r || 900 + 250 * ((p.n || 1) - 1), solveScore(mateEloM, mateEloH), 20);
+}
+function eloEndgameSolved() {
+  if (eloEgSettled || !currentEndgame) return; eloEgSettled = true;
+  settlePuzzleResult("endgame:" + (currentEndgame.id != null ? currentEndgame.id : (currentEndgame.fen || lastPuzzleId)), Number(currentEndgame.rating), solveScore(endgameMistakes, endgameHints), 20);
+}
+function eloEndgameAbandoned() {
+  if (eloEgSettled || !currentEndgame) return; eloEgSettled = true;
+  settlePuzzleResult("endgame:" + (currentEndgame.id != null ? currentEndgame.id : (currentEndgame.fen || lastPuzzleId)), Number(currentEndgame.rating), 0, 12);
+}
+$("reset-elo").addEventListener("click", function () {
+  if (!confirm("Reset Training Elo to 1200? Your practice rating and result count will be cleared. Puzzle statistics are not affected.")) return;
+  elo = sanitizeElo(null); writeStore(ELO_KEY, elo); renderElo();
+});
+renderElo();
+
+// ---------- Helpers ----------
   function setStatus(html, bad) { $("status").innerHTML = html; $("status").classList.toggle("bad", !!bad); }
   function sideName(t) { return t === "w" ? "White" : "Black"; }
   function playUci(uci) {
@@ -449,22 +485,26 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     return best;
   }
 
-  function loadPuzzle(tries) {
+  function loadPuzzle(tries, exactIndex) {
     tries = tries || 0;
     session++;
     locked = false;
     clearSelection(); clearHint();
+    if (typeof exactIndex === "number") {
+    order = PUZZLES.map(function (_, i) { return i; });
+    orderPos = exactIndex;
+  } else {
     orderPos = (orderPos + 1) % PUZZLES.length;
+  }
     const p = PUZZLES[order[orderPos]];
     game.load(p.fen);
-    if (!canMate(p.n) && tries < PUZZLES.length) return loadPuzzle(tries + 1);
-    movesLeft = p.n; mistakes = 0; hints = 0; finished = false;
+    if (!canMate(p.n) && tries < PUZZLES.length && typeof exactIndex !== "number") return loadPuzzle(tries + 1);
+    movesLeft = p.n; mistakes = 0; hints = 0; finished = false; if (!mateRetry) { mateEloM = 0; mateEloH = 0; mateSettled = false; } mateRetry = false;
     syncBoard();
     board.orientation(game.turn() === "w" ? "white" : "black");
-    $("puzzle-title").textContent = "02 вЂ” " + p.title;
+    $("puzzle-title").textContent = "02 — " + p.title;
     $("objective").textContent = sideName(game.turn()) + " to move. Deliver checkmate in " + p.n + (p.n === 1 ? " move." : " moves.");
-    $("turn-label").textContent = "Puzzle " + (orderPos + 1) + " of " + PUZZLES.length;
-    $("next-button").classList.add("hidden");
+    $("objective").textContent += p.goal ? " " + p.goal : ""; $("mate-idea").textContent = p.idea ? "Idea: " + p.idea : ""; $("turn-label").textContent = "Puzzle " + (orderPos + 1) + " of " + PUZZLES.length;
     $("hint-button").classList.remove("hidden");
     setStatus("<strong>Find the mate.</strong><br>Mate in " + p.n + ". Hints reduce your clean-solve score.");
   }
@@ -475,7 +515,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     if (game.in_checkmate()) { finishMatePuzzle(); return true; }
     if (!(n > 1 && defenderLoses(n - 1))) {
       game.undo();
-      mistakes++;
+      mistakes++; mateEloM++; penalizeEloMistake();
       setStatus("<strong>Not quite.</strong><br>That move doesn't force mate in " + n + ". Try again.", true);
       return false;
     }
@@ -500,12 +540,11 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     if (clean) { mateStats.clean++; mateStats.streak++; mateStats.best = Math.max(mateStats.best, mateStats.streak); }
     else mateStats.streak = 0;
     saveMateStats();
-    setStatus("<strong>Checkmate вЂ” solved!</strong><br>" +
+    setStatus("<strong>Checkmate — solved!</strong><br>" +
       (clean ? "Clean solve, no mistakes or hints."
              : mistakes + " mistake" + (mistakes === 1 ? "" : "s") + ", " + hints + " hint" + (hints === 1 ? "" : "s") + ".") +
       "<br>Next puzzle loading...");
-    $("hint-button").classList.add("hidden");
-    $("next-button").classList.remove("hidden");
+    eloMateSolved(); $("hint-button").classList.add("hidden");
     const mySession = session;
     setTimeout(function () { if (mySession === session && currentMode === "train") loadPuzzle(); }, 1800);
   }
@@ -514,10 +553,10 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     if (finished || locked) return;
     const m = bestMove(movesLeft);
     if (!m) return;
-    hints++;
+    hints++; mateEloH++;
     const names = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
     clearHint();
-    if (hints === 1) {
+    if (hints === 1) { const cp = PUZZLES[order[orderPos]]; if (cp && cp.hint) $("mate-idea").textContent = "Idea: " + cp.idea + " Hint: " + cp.hint;
       setStatus("<strong>Hint:</strong><br>Look at your " + names[m.piece] + ".");
       const el = document.querySelector('#board [data-square="' + m.from + '"]');
       if (el) el.classList.add("hint-sq");
@@ -582,7 +621,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     });
 
     if (!pool.length) {
-      throw new Error("The selected chunk contained no matching puzzles. Please try Next puzzle.");
+      throw new Error("The selected chunk contained no matching puzzles. Please load another puzzle.");
     }
 
     return pool;
@@ -597,7 +636,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     const p = currentEndgame, side = sideName(game.turn());
     syncBoard();
     board.orientation(game.turn() === "w" ? "white" : "black");
-    $("endgame-title").textContent = (CATEGORY_NAMES[currentCategory] || currentCategory) + " endgame вЂ” Rating " + p.rating;
+    $("endgame-title").textContent = (CATEGORY_NAMES[currentCategory] || currentCategory) + " endgame — Rating " + p.rating;
     const themes = (p.themes || []).filter(function (t) { return t !== "endgame" && !/Endgame$/.test(t); });
     const nice = themes.slice(0, 4).map(function (t) { return THEME_NAMES[t] || t.replace(/([A-Z])/g, " $1").toLowerCase(); });
     const all = p.themes || [];
@@ -622,7 +661,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
         showEndgamePuzzle(); locked = false;
         return;
       }
-      if (currentEndgame && !endgameFinished) { egStats.streak = 0; saveEndgameStats(); }
+      if (currentEndgame && !endgameFinished) { eloEndgameAbandoned(); egStats.streak = 0; saveEndgameStats(); }
       $("endgame-objective").textContent = "Loading puzzle...";
       endgameFinished = true;
       const pool = await loadEndgameData(category, currentLevel);
@@ -638,7 +677,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       for (let i = 0; i < pool.length && !chosen; i++) if (setupEndgamePosition(pool[i])) chosen = pool[i];
       if (!chosen) throw new Error("No valid puzzle found for this category and level.");
 
-      currentEndgame = chosen; lastPuzzleId = chosen.id;
+      currentEndgame = chosen; lastPuzzleId = chosen.id; eloEgSettled = false;
       endgameMoveIndex = 1; endgameMistakes = 0; endgameHints = 0; endgameFinished = false;
       egStats.attempts++; saveEndgameStats();
       showEndgamePuzzle();
@@ -661,7 +700,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     const mate = game.in_checkmate();
     if (played !== expected && !mate) {
       game.undo();
-      endgameMistakes++;
+      endgameMistakes++; penalizeEloMistake();
       const t = currentEndgame.themes || [];
       let tip = "Look for forcing moves: checks, captures and pawn pushes.";
       if (t.indexOf("equality") !== -1) tip = "You are defending here. Look for the move that keeps the draw.";
@@ -684,7 +723,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
       const reply = playUci(currentEndgame.moves[replyIndex]);
       if (!reply) {
         endgameFinished = true; locked = false;
-        setStatus("<strong>Puzzle data problem.</strong><br>The stored reply could not be played. Click Next puzzle.", true);
+        setStatus("<strong>Puzzle data problem.</strong><br>The stored reply could not be played. Try another puzzle.", true);
         return;
       }
       syncBoard();
@@ -701,7 +740,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   function finishEndgame(altMate) {
     endgameFinished = true; locked = false;
     const clean = endgameMistakes === 0 && endgameHints === 0;
-    egStats.solved++;
+    eloEndgameSolved(); egStats.solved++;
     egStats.solvedIds[currentEndgame.id] = 1;
     if (clean) { egStats.clean++; egStats.streak++; egStats.best = Math.max(egStats.best, egStats.streak); }
     else egStats.streak = 0;
@@ -710,7 +749,13 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     setStatus("<strong>Puzzle solved!</strong><br>" + (altMate ? "Checkmate: also accepted. " : "") +
       (clean ? "Clean solve, no mistakes or hints."
              : endgameMistakes + " mistake" + (endgameMistakes === 1 ? "" : "s") + ", " + endgameHints + " hint" + (endgameHints === 1 ? "" : "s") + ".") +
-      "<br>Tap Next puzzle for another.");
+      "<br>Loading the next puzzle...");
+    const solvedSession = session;
+    setTimeout(function () {
+      if (solvedSession === session && currentMode === "endgame" && endgameFinished) {
+        startEndgamePuzzle(false);
+      }
+    }, 1800);
   }
 
   function endgameHint() {
@@ -734,7 +779,7 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   function closePromotion() { if (promoOverlay) { promoOverlay.remove(); promoOverlay = null; } }
   function askPromotion(color, onChoose, onCancel) {
     closePromotion();
-    const glyphs = color === "w" ? { q: "в™•", r: "в™–", b: "в™—", n: "в™" } : { q: "в™›", r: "в™њ", b: "в™ќ", n: "в™ћ" };
+    const glyphs = color === "w" ? { q: "\u2655", r: "\u2656", b: "\u2657", n: "\u2658" } : { q: "\u265B", r: "\u265C", b: "\u265D", n: "\u265E" };
     const labels = { q: "Queen", r: "Rook", b: "Bishop", n: "Knight" };
     promoOverlay = document.createElement("div");
     promoOverlay.className = "promo-overlay";
@@ -847,7 +892,6 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
     $("endgame-card").classList.toggle("hidden", m !== "endgame");
     $("undo-button").classList.toggle("hidden", m !== "play");
     $("hint-button").classList.toggle("hidden", m === "play");
-    $("next-button").classList.toggle("hidden", m !== "endgame");
     $("mode-label").textContent = m === "train" ? "Mate training" : m === "endgame" ? "Endgame training" : "Practice board";
     renderActiveStats();
 
@@ -865,7 +909,25 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   }
 
   // ---------- Buttons ----------
-  $("mode-play").addEventListener("click", function () { setMode("play"); });
+  $("mode-play").addEventListener("click", function () { setMode("play");
+
+(function () {
+  const requestedPuzzle = new URLSearchParams(window.location.search).get("puzzle");
+  if (!requestedPuzzle) return;
+
+  const targetIndex = PUZZLES.findIndex(function (p) {
+    return p.title === requestedPuzzle;
+  });
+
+  if (targetIndex < 0) {
+    setStatus("<strong>Puzzle not found.</strong>", true);
+    return;
+  }
+
+  setMode("train");
+  order = PUZZLES.map(function (_, i) { return i; });
+  loadPuzzle(0, targetIndex);
+})(); });
   $("mode-train").addEventListener("click", function () { setMode("train"); });
   $("mode-endgame").addEventListener("click", function () { setMode("endgame"); });
 
@@ -878,17 +940,12 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   });
   $("load-endgame").addEventListener("click", function () { startEndgamePuzzle(false); });
   $("category-select").addEventListener("change", function () { if (currentMode === "endgame") startEndgamePuzzle(false); });
-
-  $("next-button").addEventListener("click", function () {
-    if (currentMode === "train") loadPuzzle();
-    else if (currentMode === "endgame") startEndgamePuzzle(false);
-  });
-  $("hint-button").addEventListener("click", function () {
+$("hint-button").addEventListener("click", function () {
     if (currentMode === "train") mateHint(); else if (currentMode === "endgame") endgameHint();
   });
   $("reset-button").addEventListener("click", function () {
     clearSelection(); clearHint();
-    if (currentMode === "train") { orderPos--; loadPuzzle(); }
+    if (currentMode === "train") { orderPos--; mateRetry = true; loadPuzzle(); }
     else if (currentMode === "endgame") startEndgamePuzzle(true);
     else { game.reset(); board.start(); updateStatus(); }
   });
@@ -905,67 +962,29 @@ footer{padding:20px;text-align:center;color:var(--muted);font-size:12px}
   window.addEventListener("resize", function () { board.resize(); });
 
 
-  // ---------- Browser-local leaderboard ----------
-  function readLeaderboard() {
-    try {
-      const data = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
-      return Array.isArray(data) ? data : [];
-    } catch (e) { return []; }
-  }
-  function renderLeaderboard() {
-    const body = $("leaderboard-rows");
-    const mode = $("leaderboard-mode").value;
-    let rows = readLeaderboard();
-    rows.sort(function (a, b) {
-      const scoreA = mode === "mate" ? a.mateSolved : mode === "endgame" ? a.egSolved : a.mateSolved + a.egSolved;
-      const scoreB = mode === "mate" ? b.mateSolved : mode === "endgame" ? b.egSolved : b.mateSolved + b.egSolved;
-      if (scoreB !== scoreA) return scoreB - scoreA;
-      const cleanA = mode === "mate" ? a.mateClean : mode === "endgame" ? a.egClean : a.mateClean + a.egClean;
-      const cleanB = mode === "mate" ? b.mateClean : mode === "endgame" ? b.egClean : b.mateClean + b.egClean;
-      if (cleanB !== cleanA) return cleanB - cleanA;
-      return (b.best || 0) - (a.best || 0);
-    });
-    body.innerHTML = "";
-    if (!rows.length) {
-      const tr = document.createElement("tr"), td = document.createElement("td");
-      td.colSpan = 5; td.textContent = "No scores saved yet.";
-      tr.appendChild(td); body.appendChild(tr); return;
-    }
-    rows.slice(0, 10).forEach(function (entry, i) {
-      const tr = document.createElement("tr");
-      const solved = mode === "mate" ? entry.mateSolved : mode === "endgame" ? entry.egSolved : entry.mateSolved + entry.egSolved;
-      const clean = mode === "mate" ? entry.mateClean : mode === "endgame" ? entry.egClean : entry.mateClean + entry.egClean;
-      [String(i + 1), entry.name, String(solved), String(clean), String(entry.best || 0)].forEach(function (value) {
-        const td = document.createElement("td"); td.textContent = value; tr.appendChild(td);
-      });
-      body.appendChild(tr);
-    });
-  }
-  function saveLeaderboardScore() {
-    const name = ($("player-name").value || "Player").trim().slice(0, 20) || "Player";
-    const rows = readLeaderboard();
-    const existing = rows.find(function (r) { return r.name.toLowerCase() === name.toLowerCase(); });
-    const entry = {
-      name: name,
-      mateSolved: mateStats.solved, mateClean: mateStats.clean,
-      egSolved: egStats.solved, egClean: egStats.clean,
-      best: Math.max(mateStats.best || 0, egStats.best || 0),
-      updated: Date.now()
-    };
-    if (existing) Object.assign(existing, entry);
-    else rows.push(entry);
-    try { localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(rows)); } catch (e) {}
-    renderLeaderboard();
-    setStatus("<strong>Score saved.</strong><br>Your local leaderboard entry has been updated.");
-  }
-  $("leaderboard-mode").addEventListener("change", renderLeaderboard);
-  $("save-leaderboard-score").addEventListener("click", saveLeaderboardScore);
 
   // ---------- Start ----------
-  renderLeaderboard();
   renderMateStats();
   renderEndgameStats();
   setMode("play");
+
+(function () {
+  const requestedPuzzle = new URLSearchParams(window.location.search).get("puzzle");
+  if (!requestedPuzzle) return;
+
+  const targetIndex = PUZZLES.findIndex(function (p) {
+    return p.title === requestedPuzzle;
+  });
+
+  if (targetIndex < 0) {
+    setStatus("<strong>Puzzle not found.</strong>", true);
+    return;
+  }
+
+  setMode("train");
+  order = PUZZLES.map(function (_, i) { return i; });
+  loadPuzzle(0, targetIndex);
+})();
   if (missingIds.length) setStatus("<strong>Setup problem.</strong><br>Missing HTML ids: " + missingIds.join(", "), true);
 })();
 </script>
